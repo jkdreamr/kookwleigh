@@ -15,25 +15,28 @@ const config: Config = {
         border: "rgb(var(--border) / <alpha-value>)",
         muted: "rgb(var(--muted) / <alpha-value>)",
         accent: "rgb(var(--accent) / <alpha-value>)",
+        clay: "rgb(var(--clay) / <alpha-value>)",
         sage: "rgb(var(--sage) / <alpha-value>)",
         powder: "rgb(var(--powder) / <alpha-value>)",
         butter: "rgb(var(--butter) / <alpha-value>)",
+        panel: "rgb(var(--panel-dark) / <alpha-value>)",
       },
       fontFamily: {
         sans: ["var(--font-inter)", "sans-serif"],
         serif: ["var(--font-fraunces)", "serif"],
       },
       boxShadow: {
-        editorial: "0 24px 70px -42px rgba(26, 26, 26, 0.42)",
-        soft: "0 2px 16px rgba(26, 26, 26, 0.06), 0 1px 4px rgba(26, 26, 26, 0.04)",
-        card: "0 1px 3px rgba(26, 26, 26, 0.05), 0 10px 36px -16px rgba(26, 26, 26, 0.16)",
+        editorial: "0 24px 80px -40px rgba(22, 18, 12, 0.38)",
+        soft: "0 2px 12px rgba(22, 18, 12, 0.06), 0 1px 3px rgba(22, 18, 12, 0.04)",
+        card: "0 1px 2px rgba(22, 18, 12, 0.04), 0 8px 32px -12px rgba(22, 18, 12, 0.12)",
+        panel: "0 32px 80px -20px rgba(22, 18, 12, 0.55)",
       },
       borderRadius: {
         "4xl": "2rem",
+        "5xl": "2.5rem",
       },
       backgroundImage: {
-        veil:
-          "linear-gradient(115deg, rgba(220,237,233,0.52), transparent 42%), linear-gradient(180deg, rgba(255,255,255,0.62), rgba(255,255,255,0))",
+        veil: "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(255,255,255,0))",
       },
     },
   },

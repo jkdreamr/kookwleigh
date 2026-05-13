@@ -3,16 +3,18 @@
 @tailwind utilities;
 
 :root {
-  --background: 246 241 232;
-  --foreground: 26 26 26;
-  --card: 255 251 245;
-  --border: 217 205 191;
-  --muted: 114 108 101;
+  --background: 242 236 224;
+  --foreground: 22 18 12;
+  --card: 252 248 240;
+  --border: 210 198 182;
+  --muted: 110 104 96;
   --accent: 196 96 74;
-  --sage: 168 184 159;
+  --clay: 196 149 106;
+  --sage: 142 158 134;
   --powder: 220 237 233;
-  --butter: 247 211 122;
+  --butter: 234 196 100;
   --radius: 0.5rem;
+  --panel-dark: 24 19 12;
 }
 
 * {
@@ -26,28 +28,24 @@ html {
 body {
   min-height: 100vh;
   color: rgb(var(--foreground) / 1);
-  background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.08)),
-    rgb(var(--background) / 1);
+  background: rgb(var(--background) / 1);
   font-family: var(--font-inter), sans-serif;
 }
 
+/* Subtle paper noise overlay — purely decorative */
 body::before {
   content: "";
   position: fixed;
   inset: 0;
   pointer-events: none;
-  opacity: 0.07;
-  background-image:
-    linear-gradient(rgba(26, 26, 26, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(26, 26, 26, 0.03) 1px, transparent 1px),
-    radial-gradient(circle, rgba(26, 26, 26, 0.09) 0.5px, transparent 0.5px);
-  background-size: 72px 72px, 72px 72px, 8px 8px;
+  opacity: 0.035;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.75' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='300' height='300' filter='url(%23n)' opacity='1'/%3E%3C/svg%3E");
+  background-size: 300px 300px;
   mix-blend-mode: multiply;
 }
 
 ::selection {
-  background: rgb(var(--accent) / 0.18);
+  background: rgb(var(--accent) / 0.15);
 }
 
 @layer base {
@@ -56,7 +54,7 @@ body::before {
   h3,
   h4 {
     font-family: var(--font-fraunces), serif;
-    letter-spacing: 0;
+    letter-spacing: -0.01em;
   }
 
   a {
@@ -76,33 +74,55 @@ body::before {
     text-wrap: balance;
   }
 
+  /* Refined eyebrow — tighter, more editorial */
   .eyebrow {
-    @apply text-xs uppercase tracking-[0.28em] text-foreground/55;
+    @apply text-[10px] font-medium uppercase tracking-[0.32em] text-foreground/40;
   }
 
+  /* Eyebrow on a dark background */
+  .eyebrow-light {
+    @apply text-[10px] font-medium uppercase tracking-[0.32em] text-white/40;
+  }
+
+  /* Glass card — used on landing */
   .glass-card {
-    @apply rounded-lg border border-foreground/10 bg-card/80 shadow-editorial backdrop-blur;
+    @apply rounded-2xl border border-foreground/10 bg-card/80 backdrop-blur;
   }
 
+  /* Right-column form frame on auth pages */
   .section-frame {
-    @apply relative overflow-hidden rounded-xl border border-foreground/10 bg-card/85 p-6 backdrop-blur md:p-8;
+    @apply relative overflow-hidden rounded-2xl border border-foreground/10 bg-card p-8 md:p-10;
   }
 
-  .page-grid {
-    @apply mx-auto grid w-full max-w-7xl gap-6 px-4 pb-16 pt-6 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10 lg:px-10 lg:pb-20 lg:pt-8;
+  /* Two-panel auth layout */
+  .auth-grid {
+    @apply grid min-h-screen lg:grid-cols-[1fr_480px];
+  }
+
+  /* Dark left panel */
+  .panel-dark {
+    background: rgb(var(--panel-dark) / 1);
   }
 
   .subtitle {
-    @apply max-w-xl text-sm leading-7 text-foreground/70 sm:text-base;
+    @apply max-w-xl text-sm leading-[1.85] text-foreground/65 sm:text-[15px];
+  }
+
+  .subtitle-light {
+    @apply max-w-lg text-sm leading-[1.85] text-white/55 sm:text-[15px];
   }
 
   /* Small in-card section label */
   .section-label {
-    @apply text-[10px] font-medium uppercase tracking-[0.22em] text-foreground/40;
+    @apply text-[10px] font-medium uppercase tracking-[0.28em] text-foreground/35;
   }
 
-  /* Soft glassy interior card */
-  .card-soft {
-    @apply rounded-2xl border border-foreground/8 bg-white/65 shadow-card backdrop-blur;
+  .section-label-light {
+    @apply text-[10px] font-medium uppercase tracking-[0.28em] text-white/35;
+  }
+
+  /* Soft interior card — dashboard */
+  .card-panel {
+    @apply rounded-2xl border border-foreground/10 bg-card/70 backdrop-blur-sm;
   }
 }

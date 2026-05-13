@@ -27,9 +27,10 @@ export function AnimatedCounter({
   }, [value]);
 
   return (
-    <span className="font-serif text-7xl leading-none text-accent sm:text-8xl lg:text-9xl">
-      {prefix}
-      {display}
-    </span>
+    <div className="flex items-baseline gap-1 leading-none">
+      <span className="font-serif text-[5rem] leading-none tracking-tight text-foreground sm:text-[7rem] lg:text-[9rem]">
+        {prefix}{display}
+      </span>
+    </div>
   );
 }
