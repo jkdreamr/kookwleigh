@@ -43,6 +43,27 @@ function bookingLabel(data: DashboardResponse): string | null {
   return "Request submitted — awaiting confirmation";
 }
 
+// ─── floating card ─────────────────────────────────────────────────────────
+
+function Card({
+  children,
+  className,
+}: {
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "rounded-2xl border border-foreground/[0.07] bg-card px-8 py-8 shadow-card",
+        className,
+      )}
+    >
+      {children}
+    </div>
+  );
+}
+
 // ─── component ─────────────────────────────────────────────────────────────
 
 export function DashboardClient() {
@@ -193,332 +214,312 @@ export function DashboardClient() {
   // ── render ───────────────────────────────────────────────────────────────
 
   return (
-    <div className="min-h-screen lg:grid lg:grid-cols-[1fr_420px]">
+    // Warm parchment background — slightly deeper than the default
+    <div className="min-h-screen" style={{ background: "rgb(234 226 212 / 1)" }}>
 
-      {/* ══ LEFT — Dark status panel (matches auth pages) ══ */}
-      <div className="panel-dark relative flex flex-col overflow-hidden">
+      {/* Subtle noise stays via body::before — page bg just shifts tone */}
 
-        {/* Warm radial orbs — decorative */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-40 -right-20 h-[600px] w-[600px] rounded-full opacity-[0.06]"
-          style={{ background: "radial-gradient(circle, #C4956A 0%, transparent 68%)" }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-0 top-0 h-72 w-72 rounded-full opacity-[0.04]"
-          style={{ background: "radial-gradient(circle, #C4604A 0%, transparent 70%)" }}
-        />
+      {/* ── Nav ── */}
+      <header className="sticky top-0 z-10 flex items-center justify-between px-6 py-5 sm:px-10">
+        <a
+          className="font-serif text-xl leading-none text-foreground/70 transition-colors hover:text-foreground"
+          href="/"
+        >
+          kookwleigh
+        </a>
+        <button
+          className="flex items-center gap-1.5 text-sm text-foreground/35 transition-colors hover:text-foreground disabled:opacity-30"
+          disabled={isPending}
+          onClick={logout}
+        >
+          <LogOut className="h-3.5 w-3.5" />
+          <span>Log out</span>
+        </button>
+      </header>
 
-        {/* Sticky nav inside the dark panel */}
-        <div className="relative z-10 flex items-center justify-between px-8 py-7 sm:px-12 lg:px-14">
-          <a
-            className="font-serif text-xl leading-none text-white/70 transition-colors hover:text-white"
-            href="/"
+      {/* ── Page body ── */}
+      <PageTransition>
+        <div className="mx-auto max-w-2xl space-y-4 px-5 pb-20 pt-6 sm:px-8 sm:pt-8">
+
+          {/* ── Hero card — name + status ── */}
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 16 }}
+            transition={{ duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
           >
-            kookwleigh
-          </a>
-          <button
-            className="flex items-center gap-1.5 text-sm text-white/30 transition-colors hover:text-white/70 disabled:opacity-30"
-            disabled={isPending}
-            onClick={logout}
-          >
-            <LogOut className="h-3.5 w-3.5" />
-            <span>Log out</span>
-          </button>
-        </div>
+            <Card className="relative overflow-hidden">
 
-        {/* Status content — grows to fill remaining height */}
-        <PageTransition>
-          <div className="relative z-10 flex flex-col justify-between flex-1 px-8 pb-12 pt-6 sm:px-12 sm:pt-8 lg:px-14 lg:pb-16 lg:pt-10">
+              {/* Decorative warm orb */}
+              <div
+                aria-hidden
+                className="pointer-events-none absolute -right-16 -top-16 h-64 w-64 rounded-full opacity-[0.12]"
+                style={{ background: "radial-gradient(circle, rgb(196 96 74) 0%, transparent 70%)" }}
+              />
 
-            {/* Guest name heading */}
-            <div className="mb-12 lg:mb-16">
-              <p className="eyebrow-light mb-4">Your table</p>
-              <h1 className="font-serif text-5xl leading-[0.92] tracking-tight text-white sm:text-6xl lg:text-7xl">
-                {firstName}.
-              </h1>
-            </div>
+              <div className="relative">
+                <p className="eyebrow mb-5">Your table</p>
+                <h1 className="font-serif text-5xl leading-[0.92] tracking-tight sm:text-6xl">
+                  {firstName}.
+                </h1>
 
-            {/* ── WAITLISTED ── */}
-            {guest.status === "WAITLISTED" && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="flex-1"
-                initial={{ opacity: 0, y: 14 }}
-                transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <p className="section-label-light mb-5">Your position</p>
-                <AnimatedCounter value={guest.position} light />
-                <div className="mt-10 border-t border-white/8 pt-8 max-w-xs">
-                  <p className="text-sm leading-relaxed text-white/40">
-                    You will be notified when it is your turn. No need to check back — we will reach out.
-                  </p>
+                <div className="mt-8 border-t border-foreground/[0.07] pt-6">
+                  {/* WAITLISTED */}
+                  {guest.status === "WAITLISTED" && (
+                    <div className="flex items-end justify-between gap-6">
+                      <div>
+                        <p className="section-label mb-3">Your position</p>
+                        <AnimatedCounter value={guest.position} />
+                      </div>
+                      <p className="mb-1 max-w-[220px] text-right text-sm leading-relaxed text-foreground/45">
+                        We will reach out when it is your turn.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* INVITED */}
+                  {guest.status === "INVITED" && (
+                    <div>
+                      <p className="section-label mb-2">Status</p>
+                      <p className="font-serif text-2xl text-foreground/80">It is your turn.</p>
+                      <p className="mt-2 text-sm text-foreground/45">
+                        Choose a date below or suggest your own night.
+                      </p>
+                    </div>
+                  )}
+
+                  {/* SCHEDULED */}
+                  {guest.status === "SCHEDULED" && (
+                    <div className="flex items-start justify-between gap-6">
+                      <div>
+                        <p className="section-label mb-2">Status</p>
+                        <p className="font-serif text-2xl text-foreground/80">See you soon.</p>
+                        {label && (
+                          <p className="mt-1.5 text-sm text-foreground/50">{label}</p>
+                        )}
+                      </div>
+                      <button
+                        className="mt-1 shrink-0 text-xs text-foreground/30 underline underline-offset-4 transition-colors hover:text-red-500 disabled:opacity-30"
+                        disabled={isPending}
+                        onClick={cancelBooking}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  )}
+
+                  {/* COMPLETED */}
+                  {guest.status === "COMPLETED" && (
+                    <div className="flex items-end justify-between gap-6">
+                      <div>
+                        <p className="section-label mb-2">Status</p>
+                        <p className="font-serif text-2xl text-foreground/80">Thank you for coming.</p>
+                        <p className="mt-1.5 text-sm text-foreground/45">
+                          It was a pleasure having you at our table.
+                        </p>
+                      </div>
+                      <button
+                        className="mb-0.5 flex shrink-0 items-center gap-1.5 text-xs text-foreground/35 transition-colors hover:text-foreground disabled:opacity-30"
+                        disabled={isPending}
+                        onClick={rejoinWaitlist}
+                      >
+                        Rejoin
+                        <ArrowRight className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
                 </div>
-              </motion.div>
-            )}
 
-            {/* ── INVITED ── */}
-            {guest.status === "INVITED" && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="flex-1"
-                initial={{ opacity: 0, y: 14 }}
-                transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="mb-6 h-px w-10 bg-accent/50" />
-                <p className="section-label-light mb-5">Status</p>
-                <h2 className="font-serif text-4xl leading-[0.93] text-white sm:text-5xl">
-                  It is your turn.
-                </h2>
-                <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/40">
-                  Pick a date on the right or suggest your own night.
-                </p>
-              </motion.div>
-            )}
-
-            {/* ── SCHEDULED ── */}
-            {guest.status === "SCHEDULED" && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="flex-1"
-                initial={{ opacity: 0, y: 14 }}
-                transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <p className="section-label-light mb-5">Status</p>
-                <h2 className="font-serif text-4xl leading-[0.93] text-white sm:text-5xl">
-                  See you soon.
-                </h2>
-                {label && (
-                  <div className="mt-8 inline-block rounded-xl border border-white/10 bg-white/5 px-5 py-4 backdrop-blur-sm">
-                    <p className="section-label-light mb-1.5">Your dinner</p>
-                    <p className="text-sm font-medium text-white/80">{label}</p>
-                  </div>
-                )}
-                <div className="mt-10 border-t border-white/8 pt-8">
-                  <p className="mb-3 text-xs text-white/30">Something come up?</p>
-                  <button
-                    className="text-sm text-white/35 underline underline-offset-4 transition-colors hover:text-red-400 disabled:opacity-30"
-                    disabled={isPending}
-                    onClick={cancelBooking}
-                  >
-                    Cancel my booking
-                  </button>
-                </div>
-              </motion.div>
-            )}
-
-            {/* ── COMPLETED ── */}
-            {guest.status === "COMPLETED" && (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                className="flex-1"
-                initial={{ opacity: 0, y: 14 }}
-                transition={{ delay: 0.1, duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
-              >
-                <div className="mb-6 h-px w-10" style={{ background: "rgb(234 196 100 / 0.5)" }} />
-                <p className="section-label-light mb-5">Status</p>
-                <h2 className="font-serif text-4xl leading-[0.93] text-white sm:text-5xl">
-                  Thank you for coming.
-                </h2>
-                <p className="mt-6 max-w-xs text-sm leading-relaxed text-white/40">
-                  It was a pleasure having you at our table. We hope to see you again.
-                </p>
-                <button
-                  className="mt-8 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/8 px-5 py-2.5 text-sm text-white/70 transition-colors hover:bg-white/12 hover:text-white disabled:opacity-30"
-                  disabled={isPending}
-                  onClick={rejoinWaitlist}
-                >
-                  Rejoin the waitlist
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </motion.div>
-            )}
-
-            {/* Logged in as — always at bottom */}
-            <div className="mt-12 border-t border-white/8 pt-6 lg:mt-0">
-              <p className="section-label-light mb-1.5">Logged in as</p>
-              <p className="text-sm text-white/35">{guest.email}</p>
-            </div>
-          </div>
-        </PageTransition>
-      </div>
-
-      {/* ══ RIGHT — Cream forms column ══ */}
-      <div className="divide-y divide-foreground/8 bg-card">
-
-        {/* ── Booking form (INVITED only) ── */}
-        {guest.status === "INVITED" && (
-          <PageTransition delay={0.12}>
-            <div className="px-8 py-10 sm:px-10">
-              <div className="mb-8">
-                <p className="section-label mb-2">Schedule</p>
-                <h2 className="font-serif text-2xl">Choose a date</h2>
+                {/* Logged in as */}
+                <p className="mt-5 text-xs text-foreground/30">{guest.email}</p>
               </div>
+            </Card>
+          </motion.div>
 
-              <form className="space-y-7" onSubmit={onBooking}>
-                {/* Available slots */}
-                {data.availableSlots.length > 0 && (
-                  <div>
-                    <p className="section-label mb-4">Open slots</p>
-                    <div className="space-y-2">
-                      {data.availableSlots.map((slot) => {
-                        const sel = selectedSlotId === slot.id;
-                        return (
+          {/* ── Booking card (INVITED only) ── */}
+          {guest.status === "INVITED" && (
+            <motion.div
+              animate={{ opacity: 1, y: 0 }}
+              initial={{ opacity: 0, y: 16 }}
+              transition={{ delay: 0.08, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
+            >
+              <Card>
+                <div className="mb-7">
+                  <p className="section-label mb-2">Schedule</p>
+                  <h2 className="font-serif text-2xl">Choose a date</h2>
+                </div>
+
+                <form className="space-y-7" onSubmit={onBooking}>
+                  {/* Available slots */}
+                  {data.availableSlots.length > 0 && (
+                    <div>
+                      <p className="section-label mb-3">Open slots</p>
+                      <div className="space-y-2">
+                        {data.availableSlots.map((slot) => {
+                          const sel = selectedSlotId === slot.id;
+                          return (
+                            <button
+                              className={cn(
+                                "flex w-full items-center justify-between rounded-xl border px-4 py-3.5 text-left text-sm transition-all duration-150",
+                                sel
+                                  ? "border-accent/25 bg-accent/5"
+                                  : "border-foreground/[0.08] bg-background/40 hover:border-foreground/15 hover:bg-background/70",
+                              )}
+                              key={slot.id}
+                              onClick={() => toggleSlot(slot.id)}
+                              type="button"
+                            >
+                              <div>
+                                <span className="block font-medium text-foreground/80">
+                                  {formatShortDate(new Date(slot.date))}
+                                </span>
+                                <span className="mt-0.5 block text-xs text-foreground/40">
+                                  {formatTimeRange(slot.startTime, slot.endTime)}
+                                </span>
+                              </div>
+                              <span
+                                className={cn(
+                                  "flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all",
+                                  sel ? "bg-accent" : "border border-foreground/15",
+                                )}
+                              >
+                                {sel && <Check className="h-2.5 w-2.5 text-white" />}
+                              </span>
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {selectedSlot && (
+                        <div className="mt-3 flex items-center gap-2 rounded-lg bg-foreground/[0.04] px-3 py-2 text-xs">
+                          <Check className="h-3 w-3 shrink-0 text-foreground/35" />
+                          <span className="text-foreground/55">
+                            {formatShortDate(new Date(selectedSlot.date))} ·{" "}
+                            {formatTimeRange(selectedSlot.startTime, selectedSlot.endTime)}
+                          </span>
                           <button
-                            className={cn(
-                              "flex w-full items-center justify-between rounded-xl border px-4 py-3.5 text-left text-sm transition-all duration-150",
-                              sel
-                                ? "border-accent/30 bg-accent/5"
-                                : "border-foreground/8 bg-background/50 hover:border-foreground/15 hover:bg-background",
-                            )}
-                            key={slot.id}
-                            onClick={() => toggleSlot(slot.id)}
+                            className="ml-auto text-foreground/30 hover:text-foreground"
+                            onClick={() => setSelectedSlotId("")}
                             type="button"
                           >
-                            <div>
-                              <span className="block font-medium text-foreground/80">
-                                {formatShortDate(new Date(slot.date))}
-                              </span>
-                              <span className="mt-0.5 block text-xs text-foreground/40">
-                                {formatTimeRange(slot.startTime, slot.endTime)}
-                              </span>
-                            </div>
-                            <span
-                              className={cn(
-                                "flex h-5 w-5 shrink-0 items-center justify-center rounded-full transition-all",
-                                sel ? "bg-accent" : "border border-foreground/15",
-                              )}
-                            >
-                              {sel && <Check className="h-2.5 w-2.5 text-white" />}
-                            </span>
+                            <X className="h-3 w-3" />
                           </button>
-                        );
-                      })}
+                        </div>
+                      )}
                     </div>
-                    {selectedSlot && (
-                      <div className="mt-3 flex items-center gap-2 rounded-lg bg-foreground/4 px-3 py-2 text-xs">
-                        <Check className="h-3 w-3 shrink-0 text-foreground/35" />
-                        <span className="text-foreground/55">
-                          {formatShortDate(new Date(selectedSlot.date))} ·{" "}
-                          {formatTimeRange(selectedSlot.startTime, selectedSlot.endTime)}
-                        </span>
-                        <button
-                          className="ml-auto text-foreground/30 hover:text-foreground"
-                          onClick={() => setSelectedSlotId("")}
-                          type="button"
-                        >
-                          <X className="h-3 w-3" />
-                        </button>
+                  )}
+
+                  {/* Custom date / time */}
+                  {!selectedSlotId && (
+                    <div>
+                      <p className="section-label mb-3">
+                        {data.availableSlots.length > 0
+                          ? "Or suggest a different night"
+                          : "Suggest a night that works for you"}
+                      </p>
+                      <div className="grid gap-5 sm:grid-cols-2">
+                        <div className="grid gap-2">
+                          <Label htmlFor="requestedDate">Date</Label>
+                          <Input id="requestedDate" name="requestedDate" type="date" />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="requestedTime">Time</Label>
+                          <Input id="requestedTime" name="requestedTime" type="time" />
+                        </div>
                       </div>
+                    </div>
+                  )}
+
+                  <div className="grid gap-2">
+                    <Label htmlFor="notes">Note to Josh and Leigh</Label>
+                    <Textarea
+                      id="notes"
+                      name="notes"
+                      placeholder="Any preferences or things we should know?"
+                    />
+                  </div>
+
+                  <Button className="w-full" disabled={isPending} type="submit">
+                    <Send className="h-3.5 w-3.5" />
+                    {isPending ? "Sending..." : "Send request"}
+                  </Button>
+                </form>
+
+                {/* Current pending request */}
+                {data.booking && (
+                  <div className="mt-6 rounded-xl border border-foreground/[0.07] bg-background/50 px-4 py-4">
+                    <p className="section-label mb-1.5">Current request</p>
+                    <p className="text-sm font-medium text-foreground/70">
+                      {label ?? "Submitted — awaiting confirmation"}
+                    </p>
+                    {data.booking.notes && (
+                      <p className="mt-1.5 text-xs italic text-foreground/40">
+                        &ldquo;{data.booking.notes}&rdquo;
+                      </p>
                     )}
                   </div>
                 )}
+              </Card>
+            </motion.div>
+          )}
 
-                {/* Custom date / time */}
-                {!selectedSlotId && (
-                  <div>
-                    <p className="section-label mb-4">
-                      {data.availableSlots.length > 0
-                        ? "Or suggest a different night"
-                        : "Suggest a night that works for you"}
-                    </p>
-                    <div className="grid gap-5 sm:grid-cols-2">
-                      <div className="grid gap-2">
-                        <Label htmlFor="requestedDate">Date</Label>
-                        <Input id="requestedDate" name="requestedDate" type="date" />
-                      </div>
-                      <div className="grid gap-2">
-                        <Label htmlFor="requestedTime">Time</Label>
-                        <Input id="requestedTime" name="requestedTime" type="time" />
-                      </div>
-                    </div>
-                  </div>
-                )}
+          {/* ── Details card ── */}
+          <motion.div
+            animate={{ opacity: 1, y: 0 }}
+            initial={{ opacity: 0, y: 16 }}
+            transition={{
+              delay: guest.status === "INVITED" ? 0.14 : 0.08,
+              duration: 0.55,
+              ease: [0.22, 1, 0.36, 1],
+            }}
+          >
+            <Card>
+              <div className="mb-7">
+                <p className="section-label mb-2">Account</p>
+                <h2 className="font-serif text-2xl">Your details</h2>
+              </div>
+
+              <form className="space-y-6" onSubmit={onUpdate}>
+                <div className="grid gap-2">
+                  <Label htmlFor="name">Name</Label>
+                  <Input defaultValue={guest.name} id="name" name="name" required />
+                </div>
 
                 <div className="grid gap-2">
-                  <Label htmlFor="notes">Note to Josh and Leigh</Label>
+                  <Label className="flex items-center justify-between">
+                    Email
+                    <span className="text-[11px] font-normal text-foreground/30">Cannot be changed</span>
+                  </Label>
+                  <Input disabled value={guest.email} />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="allergies">Allergies or dietary restrictions</Label>
                   <Textarea
-                    id="notes"
-                    name="notes"
-                    placeholder="Any preferences or things we should know?"
+                    defaultValue={guest.allergies ?? ""}
+                    id="allergies"
+                    name="allergies"
+                    placeholder="Anything we should avoid?"
+                  />
+                </div>
+
+                <div className="grid gap-2">
+                  <Label htmlFor="favoriteCuisines">Favourite cuisines</Label>
+                  <Textarea
+                    defaultValue={guest.favoriteCuisines ?? ""}
+                    id="favoriteCuisines"
+                    name="favoriteCuisines"
+                    placeholder="What cuisines do you love most?"
                   />
                 </div>
 
                 <Button className="w-full" disabled={isPending} type="submit">
-                  <Send className="h-3.5 w-3.5" />
-                  {isPending ? "Sending..." : "Send request"}
+                  {isPending ? "Saving..." : "Save details"}
                 </Button>
               </form>
+            </Card>
+          </motion.div>
 
-              {/* Current pending request */}
-              {data.booking && (
-                <div className="mt-6 rounded-xl border border-foreground/8 bg-background/50 px-4 py-4">
-                  <p className="section-label mb-2">Current request</p>
-                  <p className="text-sm font-medium text-foreground/70">
-                    {label ?? "Submitted — awaiting confirmation"}
-                  </p>
-                  {data.booking.notes && (
-                    <p className="mt-1.5 text-xs italic text-foreground/40">
-                      &ldquo;{data.booking.notes}&rdquo;
-                    </p>
-                  )}
-                </div>
-              )}
-            </div>
-          </PageTransition>
-        )}
-
-        {/* ── Edit details ── */}
-        <PageTransition delay={guest.status === "INVITED" ? 0.16 : 0.12}>
-          <div className="px-8 py-10 sm:px-10">
-            <div className="mb-8">
-              <p className="section-label mb-2">Account</p>
-              <h2 className="font-serif text-2xl">Your details</h2>
-            </div>
-
-            <form className="space-y-6" onSubmit={onUpdate}>
-              <div className="grid gap-2">
-                <Label htmlFor="name">Name</Label>
-                <Input defaultValue={guest.name} id="name" name="name" required />
-              </div>
-
-              <div className="grid gap-2">
-                <Label className="flex items-center justify-between">
-                  Email
-                  <span className="text-[11px] font-normal text-foreground/30">Cannot be changed</span>
-                </Label>
-                <Input disabled value={guest.email} />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="allergies">Allergies or dietary restrictions</Label>
-                <Textarea
-                  defaultValue={guest.allergies ?? ""}
-                  id="allergies"
-                  name="allergies"
-                  placeholder="Anything we should avoid?"
-                />
-              </div>
-
-              <div className="grid gap-2">
-                <Label htmlFor="favoriteCuisines">Favourite cuisines</Label>
-                <Textarea
-                  defaultValue={guest.favoriteCuisines ?? ""}
-                  id="favoriteCuisines"
-                  name="favoriteCuisines"
-                  placeholder="What cuisines do you love most?"
-                />
-              </div>
-
-              <Button className="w-full" disabled={isPending} type="submit">
-                {isPending ? "Saving..." : "Save details"}
-              </Button>
-            </form>
-          </div>
-        </PageTransition>
-
-      </div>{/* end right column */}
+        </div>
+      </PageTransition>
     </div>
   );
 }
