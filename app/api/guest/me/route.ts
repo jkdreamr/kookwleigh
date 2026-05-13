@@ -58,18 +58,23 @@ export async function PATCH(request: Request) {
     return unauthorized();
   }
 
-  const { updateGuestSchema } = await import("@/lib/validators");
-  const { parseJsonBody } = await import("@/lib/utils");
-  const payload = updateGuestSchema.parse(await parseJsonBody(request));
+  try {
+    const { updateGuestSchema } = await import("@/lib/validators");
+    const { parseJsonBody } = await import("@/lib/utils");
+    const payload = updateGuestSchema.parse(await parseJsonBody(request));
 
-  const guest = await db.guest.update({
-    data: {
-      allergies: payload.allergies || null,
-      favoriteCuisines: payload.favoriteCuisines || null,
-      name: payload.name,
-    },
-    where: { id: session.guestId },
-  });
+    const guest = await db.guest.update({
+      data: {
+        allergies: payload.allergies || null,
+        favoriteCuisines: payload.favoriteCuisines || null,
+        name: payload.name,
+      },
+      where: { id: session.guestId },
+    });
 
-  return NextResponse.json({ guest: serializeGuest(guest) });
+    return NextResponse.json({ guest: serializeGuest(guest) });
+  } catch (error) {
+    const { apiError } = await import("@/app/api/_helpers");
+    return apiError(error);
+  }
 }

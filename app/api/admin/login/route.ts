@@ -27,7 +27,7 @@ export async function POST(request: Request) {
 
 export async function DELETE() {
   const session = await getSession();
-  session.destroy();
+  await session.destroy();
 
   return NextResponse.json({ ok: true });
 }
