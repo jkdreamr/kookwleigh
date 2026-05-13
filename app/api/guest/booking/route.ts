@@ -3,6 +3,7 @@ import { BookingStatus, GuestStatus } from "@prisma/client";
 import { apiError, unauthorized } from "@/app/api/_helpers";
 import { db } from "@/lib/db";
 import { parseDateInput } from "@/lib/dates";
+import { sendGuestCancelledEmail } from "@/lib/email";
 import { parseJsonBody } from "@/lib/utils";
 import { requireGuestSession } from "@/lib/session";
 import { bookingRequestSchema } from "@/lib/validators";
@@ -64,6 +65,73 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ booking: serializeBooking(booking) });
+  } catch (error) {
+    return apiError(error);
+  }
+}
+
+export async function DELETE() {
+  const session = await requireGuestSession();
+
+  if (!session) {
+    return unauthorized();
+  }
+
+  try {
+    const result = await db.$transaction(async (tx) => {
+      const guest = await tx.guest.findUnique({
+        where: { id: session.guestId },
+      });
+
+      if (!guest) {
+        throw new Error("Guest not found.");
+      }
+
+      if (guest.status !== GuestStatus.SCHEDULED) {
+        throw new Error("Only scheduled guests can cancel a booking.");
+      }
+
+      const booking = await tx.booking.findFirst({
+        include: { slot: true },
+        where: {
+          guestId: guest.id,
+          status: BookingStatus.CONFIRMED,
+        },
+      });
+
+      if (!booking) {
+        throw new Error("No confirmed booking found.");
+      }
+
+      // Free the slot back up
+      if (booking.slotId) {
+        await tx.availableSlot.update({
+          data: { isBooked: false },
+          where: { id: booking.slotId },
+        });
+      }
+
+      await tx.booking.update({
+        data: { status: BookingStatus.CANCELLED },
+        where: { id: booking.id },
+      });
+
+      // Move guest back to INVITED so they can rebook
+      await tx.guest.update({
+        data: { status: GuestStatus.INVITED },
+        where: { id: guest.id },
+      });
+
+      return { booking, guest };
+    });
+
+    // Notify host
+    await sendGuestCancelledEmail({
+      guestEmail: result.guest.email,
+      guestName: result.guest.name,
+    });
+
+    return NextResponse.json({ ok: true });
   } catch (error) {
     return apiError(error);
   }

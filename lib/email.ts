@@ -13,7 +13,10 @@ type EmailTemplate = {
 };
 
 const resend = env.resendApiKey ? new Resend(env.resendApiKey) : null;
+// NOTE: Change this to your verified Resend domain, e.g. "kookwleigh <hello@kookwleigh.com>"
+// The onboarding@resend.dev address only works for testing to your own Resend account email.
 const fromAddress = "kookwleigh <onboarding@resend.dev>";
+const hostEmail = "joskoo@stanford.edu";
 
 function renderEmailTemplate({
   ctaHref,
@@ -170,6 +173,29 @@ export async function sendBookingCancelledEmail({
     subject: "Your kookwleigh dinner has been cancelled",
     text: `Your scheduled dinner has been cancelled. We apologize for the inconvenience.`,
     to: email,
+  });
+}
+
+export async function sendGuestCancelledEmail({
+  guestEmail,
+  guestName,
+}: {
+  guestEmail: string;
+  guestName: string;
+}) {
+  await sendEmail({
+    ctaHref: `${env.appUrl}/admin`,
+    ctaLabel: "Open admin",
+    details: [
+      `${guestName} (${guestEmail}) has cancelled their confirmed booking.`,
+      "The slot has been freed up automatically.",
+      "They have been moved back to invited status and can rebook.",
+    ],
+    headline: "A guest cancelled their booking.",
+    preview: `${guestName} cancelled their dinner.`,
+    subject: `Booking cancelled — ${guestName}`,
+    text: `${guestName} (${guestEmail}) cancelled their confirmed booking. The slot is now open again.`,
+    to: hostEmail,
   });
 }
 
