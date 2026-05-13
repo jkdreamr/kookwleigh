@@ -1,45 +1,74 @@
 import type { Metadata } from "next";
-import { ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { AdminLoginForm } from "@/components/admin-login-form";
+import { PageTransition } from "@/components/page-transition";
 
 export const metadata: Metadata = {
   title: "Host login",
 };
-import { BrandMark } from "@/components/brand-mark";
-import { AdminLoginForm } from "@/components/admin-login-form";
-import { PageTransition } from "@/components/page-transition";
 
 export default function AdminLoginPage() {
   return (
-    <main className="page-grid min-h-screen">
-      <section className="flex flex-col justify-between gap-10">
-        <BrandMark />
+    <div className="auth-grid">
+
+      {/* ── Left — dark editorial panel ── */}
+      <div className="panel-dark relative flex flex-col justify-between overflow-hidden px-10 py-10 lg:px-16 lg:py-14">
+
+        {/* Warm radial orbs — decorative */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -bottom-32 -right-20 h-[520px] w-[520px] rounded-full opacity-[0.06]"
+          style={{ background: "radial-gradient(circle, #C4956A 0%, transparent 70%)" }}
+        />
+        <div
+          aria-hidden
+          className="pointer-events-none absolute left-0 top-0 h-56 w-56 rounded-full opacity-[0.04]"
+          style={{ background: "radial-gradient(circle, #C4604A 0%, transparent 70%)" }}
+        />
+
+        {/* Logo */}
+        <Link className="inline-block" href="/">
+          <span className="eyebrow-light block mb-1">Dinner Waitlist</span>
+          <span className="font-serif text-2xl leading-none text-white">kookwleigh</span>
+        </Link>
+
+        {/* Central editorial copy */}
         <PageTransition>
-          <div>
-            <p className="eyebrow">Admin</p>
-            <h1 className="mt-4 font-serif text-6xl leading-none sm:text-7xl">
-              Host console.
+          <div className="max-w-sm">
+            <div className="mb-7 h-px w-12" style={{ background: "rgb(196 149 106 / 0.5)" }} />
+            <p className="eyebrow-light mb-4">Host access</p>
+            <h1 className="font-serif text-5xl leading-[0.93] tracking-tight text-white sm:text-6xl lg:text-[4.5rem]">
+              The host<br />console.
             </h1>
-            <p className="subtitle mt-6">
-              A private place to invite guests, open dinner slots, and keep the next meal tidy.
+            <p className="subtitle-light mt-7">
+              Invite guests, open dinner slots, and manage the waitlist — all in one private place.
             </p>
-            <div className="mt-8 grid max-w-md gap-3 text-sm text-foreground/70">
-              <div className="flex items-center gap-3 rounded-lg border border-foreground/10 bg-white/60 px-4 py-3">
-                <ShieldCheck className="h-4 w-4 text-sage" />
-                Protected by the admin password in your environment.
-              </div>
-            </div>
           </div>
         </PageTransition>
-      </section>
-      <PageTransition delay={0.08}>
-        <section className="section-frame self-start bg-card/90">
-          <div className="mb-7">
-            <p className="eyebrow">Host sign in</p>
-            <h2 className="mt-2 font-serif text-3xl">Open the dinner board</h2>
+
+        {/* Bottom nav */}
+        <nav className="flex flex-col gap-2 text-sm text-white/35">
+          <Link className="transition-colors hover:text-white/70" href="/">
+            ← Back to home
+          </Link>
+        </nav>
+      </div>
+
+      {/* ── Right — form column ── */}
+      <div className="flex flex-col justify-center bg-card px-8 py-12 sm:px-12 lg:px-14">
+        <PageTransition delay={0.1}>
+          <div className="mx-auto w-full max-w-sm">
+            <div className="mb-10">
+              <p className="section-label mb-3">Hosts only</p>
+              <h2 className="font-serif text-2xl leading-snug text-foreground">
+                Sign in
+              </h2>
+            </div>
+            <AdminLoginForm />
           </div>
-          <AdminLoginForm />
-        </section>
-      </PageTransition>
-    </main>
+        </PageTransition>
+      </div>
+
+    </div>
   );
 }
