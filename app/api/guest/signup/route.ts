@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { Prisma } from "@prisma/client";
 import { apiError } from "@/app/api/_helpers";
 import { db } from "@/lib/db";
-import { sendWaitlistConfirmationEmail } from "@/lib/email";
+import { notifyHostNewSignup, sendWaitlistConfirmationEmail } from "@/lib/email";
 import { parseJsonBody } from "@/lib/utils";
 import { getSession } from "@/lib/session";
 import { signupSchema } from "@/lib/validators";
@@ -31,7 +31,15 @@ export async function POST(request: Request) {
     session.isAdmin = false;
     await session.save();
 
+    // Email the guest their waitlist confirmation
     await sendWaitlistConfirmationEmail({
+      email: guest.email,
+      name: guest.name,
+      position: guest.position,
+    });
+
+    // Notify the host of the new signup
+    await notifyHostNewSignup({
       email: guest.email,
       name: guest.name,
       position: guest.position,

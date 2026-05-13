@@ -2,8 +2,12 @@ import { NextResponse } from "next/server";
 import { BookingStatus, GuestStatus } from "@prisma/client";
 import { apiError, unauthorized } from "@/app/api/_helpers";
 import { db } from "@/lib/db";
-import { parseDateInput } from "@/lib/dates";
-import { sendGuestCancelledEmail } from "@/lib/email";
+import { formatDisplayDate, formatTimeLabel, formatTimeRange, parseDateInput } from "@/lib/dates";
+import {
+  notifyHostBookingRequested,
+  notifyHostGuestCancelled,
+  sendGuestCancelledGuestEmail,
+} from "@/lib/email";
 import { parseJsonBody } from "@/lib/utils";
 import { requireGuestSession } from "@/lib/session";
 import { bookingRequestSchema } from "@/lib/validators";
@@ -27,6 +31,7 @@ export async function POST(request: Request) {
         throw new Error("Only invited guests can request a booking.");
       }
 
+      // Cancel any previous pending request
       await tx.booking.updateMany({
         data: { status: BookingStatus.CANCELLED },
         where: { guestId: guest.id, status: BookingStatus.PENDING },
@@ -47,7 +52,7 @@ export async function POST(request: Request) {
             notes: payload.notes || null,
             slotId: slot.id,
           },
-          include: { slot: true },
+          include: { guest: true, slot: true },
         });
       }
 
@@ -60,8 +65,29 @@ export async function POST(request: Request) {
             : null,
           requestedTime: payload.requestedTime ?? null,
         },
-        include: { slot: true },
+        include: { guest: true, slot: true },
       });
+    });
+
+    // Build readable labels for the host notification
+    const dateLabel = booking.slot
+      ? formatDisplayDate(booking.slot.date)
+      : booking.requestedDate
+        ? formatDisplayDate(booking.requestedDate)
+        : "a date TBD";
+    const timeLabel = booking.slot
+      ? formatTimeRange(booking.slot.startTime, booking.slot.endTime)
+      : booking.requestedTime
+        ? formatTimeLabel(booking.requestedTime)
+        : "a time TBD";
+
+    // Notify the host a booking request has come in
+    await notifyHostBookingRequested({
+      dateLabel,
+      guestEmail: booking.guest.email,
+      guestName: booking.guest.name,
+      notes: booking.notes,
+      timeLabel,
     });
 
     return NextResponse.json({ booking: serializeBooking(booking) });
@@ -116,7 +142,7 @@ export async function DELETE() {
         where: { id: booking.id },
       });
 
-      // Move guest back to INVITED so they can rebook
+      // Move guest back to INVITED so they can rebook without losing their spot
       await tx.guest.update({
         data: { status: GuestStatus.INVITED },
         where: { id: guest.id },
@@ -125,10 +151,28 @@ export async function DELETE() {
       return { booking, guest };
     });
 
-    // Notify host
-    await sendGuestCancelledEmail({
-      guestEmail: result.guest.email,
-      guestName: result.guest.name,
+    const { booking, guest } = result;
+
+    const dateLabel = booking.slot
+      ? formatDisplayDate(booking.slot.date)
+      : booking.requestedDate
+        ? formatDisplayDate(booking.requestedDate)
+        : "their upcoming dinner";
+    const timeLabel = booking.slot
+      ? formatTimeRange(booking.slot.startTime, booking.slot.endTime)
+      : booking.requestedTime
+        ? formatTimeLabel(booking.requestedTime)
+        : "";
+
+    // Email the guest confirming their cancellation and inviting them to rebook
+    await sendGuestCancelledGuestEmail(guest.email);
+
+    // Notify host with full details
+    await notifyHostGuestCancelled({
+      dateLabel,
+      guestEmail: guest.email,
+      guestName: guest.name,
+      timeLabel,
     });
 
     return NextResponse.json({ ok: true });

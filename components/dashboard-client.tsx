@@ -2,12 +2,19 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CalendarDays, Check, LogOut, Pencil, Send } from "lucide-react";
+import {
+  ArrowRight,
+  CalendarDays,
+  Check,
+  LogOut,
+  Pencil,
+  Send,
+  X,
+} from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { PageTransition } from "@/components/page-transition";
 import { showToast } from "@/components/toast";
 import { Button } from "@/components/ui/button";
-import { Calendar } from "@/components/ui/calendar";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -20,25 +27,24 @@ import {
 import type { DashboardResponse } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
-function bookingLabel(data: DashboardResponse) {
-  const booking = data.booking;
-  if (!booking) return null;
+// ─── helpers ───────────────────────────────────────────────────────────────
 
-  if (booking.slot) {
+function bookingLabel(data: DashboardResponse): string | null {
+  const { booking } = data;
+  if (!booking) return null;
+  if (booking.slot)
     return `${formatDisplayDate(new Date(booking.slot.date))} · ${formatTimeRange(
       booking.slot.startTime,
       booking.slot.endTime,
     )}`;
-  }
-
-  if (booking.requestedDate && booking.requestedTime) {
+  if (booking.requestedDate && booking.requestedTime)
     return `${formatDisplayDate(new Date(booking.requestedDate))} · ${formatTimeLabel(
       booking.requestedTime,
     )}`;
-  }
-
-  return "Requested — awaiting confirmation";
+  return "Request submitted — awaiting confirmation";
 }
+
+// ─── component ─────────────────────────────────────────────────────────────
 
 export function DashboardClient() {
   const router = useRouter();
@@ -48,24 +54,21 @@ export function DashboardClient() {
   const [isPending, startTransition] = useTransition();
 
   async function loadDashboard() {
-    const response = await fetch("/api/guest/me", { cache: "no-store" });
-    if (!response.ok) {
-      setLoadError("This session could not be loaded. Please log in again.");
+    const res = await fetch("/api/guest/me", { cache: "no-store" });
+    if (!res.ok) {
+      setLoadError("Session could not be loaded. Please log in again.");
       return;
     }
-    setData((await response.json()) as DashboardResponse);
+    setData((await res.json()) as DashboardResponse);
   }
 
-  useEffect(() => { void loadDashboard(); }, []);
+  useEffect(() => {
+    void loadDashboard();
+  }, []);
 
   const selectedSlot = useMemo(
     () => data?.availableSlots.find((s) => s.id === selectedSlotId),
     [data?.availableSlots, selectedSlotId],
-  );
-
-  const slotDates = useMemo(
-    () => data?.availableSlots.map((s) => new Date(s.date)) ?? [],
-    [data?.availableSlots],
   );
 
   function toggleSlot(id: string) {
@@ -86,11 +89,10 @@ export function DashboardClient() {
         method: "PATCH",
       });
       if (!res.ok) {
-        const r = (await res.json()) as { error?: string };
-        showToast(r.error ?? "Could not update your details.", "error");
+        showToast(((await res.json()) as { error?: string }).error ?? "Could not save.", "error");
         return;
       }
-      showToast("Notes saved.");
+      showToast("Details saved.");
       await loadDashboard();
     });
   }
@@ -113,11 +115,11 @@ export function DashboardClient() {
         method: "POST",
       });
       if (!res.ok) {
-        const r = (await res.json()) as { error?: string };
-        showToast(r.error ?? "Could not request that booking.", "error");
+        showToast(((await res.json()) as { error?: string }).error ?? "Could not send request.", "error");
         return;
       }
       showToast("Request sent to Josh and Leigh.");
+      setSelectedSlotId("");
       await loadDashboard();
     });
   }
@@ -126,11 +128,22 @@ export function DashboardClient() {
     startTransition(async () => {
       const res = await fetch("/api/guest/booking", { method: "DELETE" });
       if (!res.ok) {
-        const r = (await res.json()) as { error?: string };
-        showToast(r.error ?? "Could not cancel your booking.", "error");
+        showToast(((await res.json()) as { error?: string }).error ?? "Could not cancel.", "error");
         return;
       }
-      showToast("Booking cancelled. You can now rebook.");
+      showToast("Booking cancelled. You can now choose a new date.");
+      await loadDashboard();
+    });
+  }
+
+  function rejoinWaitlist() {
+    startTransition(async () => {
+      const res = await fetch("/api/guest/rejoin", { method: "POST" });
+      if (!res.ok) {
+        showToast(((await res.json()) as { error?: string }).error ?? "Could not rejoin.", "error");
+        return;
+      }
+      showToast("You are back on the waitlist.");
       await loadDashboard();
     });
   }
@@ -143,18 +156,7 @@ export function DashboardClient() {
     });
   }
 
-  function rejoinWaitlist() {
-    startTransition(async () => {
-      const res = await fetch("/api/guest/rejoin", { method: "POST" });
-      if (!res.ok) {
-        const r = (await res.json()) as { error?: string };
-        showToast(r.error ?? "Could not rejoin the waitlist.", "error");
-        return;
-      }
-      showToast("You are back on the waitlist.");
-      await loadDashboard();
-    });
-  }
+  // ── loading / error states ───────────────────────────────────────────────
 
   if (loadError) {
     return (
@@ -174,20 +176,23 @@ export function DashboardClient() {
 
   const { guest } = data;
   const label = bookingLabel(data);
+  const firstName = guest.name.split(" ")[0];
+
+  // ── render ───────────────────────────────────────────────────────────────
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-5 py-10 sm:px-8 lg:py-14">
+    <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-8 lg:py-16">
 
       {/* ── Page header ── */}
       <div className="mb-10 flex items-start justify-between">
         <div>
-          <p className="eyebrow mb-2">Your table</p>
-          <h1 className="font-serif text-[2.6rem] leading-none sm:text-5xl">
-            {guest.name.split(" ")[0]}.
+          <p className="eyebrow mb-2">kookwleigh</p>
+          <h1 className="font-serif text-[2.8rem] leading-none tracking-tight sm:text-5xl">
+            {firstName}.
           </h1>
         </div>
         <button
-          className="flex items-center gap-1.5 rounded-full border border-foreground/10 bg-card/80 px-3.5 py-2 text-sm text-foreground/55 backdrop-blur transition hover:text-foreground"
+          className="flex items-center gap-1.5 rounded-full border border-foreground/10 bg-white/70 px-3.5 py-2 text-sm text-foreground/50 backdrop-blur transition hover:text-foreground"
           disabled={isPending}
           onClick={logout}
         >
@@ -196,92 +201,92 @@ export function DashboardClient() {
         </button>
       </div>
 
-      {/* ── Status strip ── */}
+      {/* ── Status card ── */}
       <PageTransition>
-        <div className="mb-8 rounded-2xl border border-foreground/8 bg-card/70 px-6 py-5 backdrop-blur sm:px-8">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="eyebrow mb-3">{guest.status.toLowerCase()}</p>
+        <div className="mb-6 rounded-2xl border border-foreground/8 bg-white/60 px-7 py-6 backdrop-blur">
 
-              {guest.status === "WAITLISTED" && (
-                <div>
-                  <p className="mb-1 text-xs text-foreground/40 uppercase tracking-widest">position</p>
-                  <AnimatedCounter value={guest.position} />
-                  <p className="mt-2 text-sm text-foreground/55 leading-relaxed">
-                    Josh and Leigh will contact you soon.
-                  </p>
-                </div>
-              )}
+          {/* Status label pill */}
+          <span className="inline-flex items-center rounded-full bg-foreground/6 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-foreground/50">
+            {guest.status.toLowerCase()}
+          </span>
 
-              {guest.status === "INVITED" && (
-                <div>
-                  <h2 className="font-serif text-3xl sm:text-4xl">It is your turn.</h2>
-                  <p className="mt-2 text-sm text-foreground/55 leading-relaxed">
-                    Choose an open date below, or suggest another night.
-                  </p>
-                </div>
-              )}
-
-              {guest.status === "SCHEDULED" && (
-                <div>
-                  <h2 className="font-serif text-3xl sm:text-4xl">See you soon.</h2>
-                  {label && (
-                    <p className="mt-2 text-sm font-medium text-foreground/70">{label}</p>
-                  )}
-                </div>
-              )}
-
-              {guest.status === "COMPLETED" && (
-                <div>
-                  <h2 className="font-serif text-3xl sm:text-4xl">Dinner complete.</h2>
-                  <p className="mt-2 text-sm text-foreground/55 leading-relaxed">
-                    Hope you enjoyed it. Join the waitlist again whenever you&apos;d like.
-                  </p>
-                </div>
-              )}
+          {/* WAITLISTED */}
+          {guest.status === "WAITLISTED" && (
+            <div className="mt-4">
+              <p className="mb-1 text-xs uppercase tracking-widest text-foreground/35">
+                Your position
+              </p>
+              <AnimatedCounter value={guest.position} />
+              <p className="mt-3 text-sm leading-relaxed text-foreground/55">
+                Josh and Leigh will reach out personally when it is your turn.
+              </p>
             </div>
+          )}
 
-            {/* Status actions */}
-            <div className="flex flex-wrap gap-2">
-              {guest.status === "SCHEDULED" && (
-                <button
-                  className="rounded-full border border-foreground/10 bg-white/60 px-4 py-2 text-sm text-foreground/55 transition hover:border-red-200 hover:bg-red-50 hover:text-red-700"
-                  disabled={isPending}
-                  onClick={cancelBooking}
-                >
-                  Cancel booking
-                </button>
-              )}
-              {guest.status === "COMPLETED" && (
-                <Button disabled={isPending} onClick={rejoinWaitlist} size="sm">
-                  Rejoin waitlist
-                  <ArrowRight className="h-3.5 w-3.5" />
-                </Button>
-              )}
+          {/* INVITED */}
+          {guest.status === "INVITED" && (
+            <div className="mt-4">
+              <h2 className="font-serif text-3xl sm:text-4xl">It is your turn.</h2>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/55">
+                Pick a date below or suggest your own night.
+              </p>
             </div>
-          </div>
+          )}
+
+          {/* SCHEDULED */}
+          {guest.status === "SCHEDULED" && (
+            <div className="mt-4">
+              <h2 className="font-serif text-3xl sm:text-4xl">See you soon.</h2>
+              {label && (
+                <p className="mt-2 text-sm font-medium text-foreground/65">{label}</p>
+              )}
+              <button
+                className="mt-4 text-sm text-foreground/40 underline-offset-2 hover:text-foreground/70 hover:underline transition"
+                disabled={isPending}
+                onClick={cancelBooking}
+              >
+                Need to cancel?
+              </button>
+            </div>
+          )}
+
+          {/* COMPLETED — dinner truly done, host marked it complete */}
+          {guest.status === "COMPLETED" && (
+            <div className="mt-4">
+              <h2 className="font-serif text-3xl sm:text-4xl">Thank you for coming.</h2>
+              <p className="mt-2 text-sm leading-relaxed text-foreground/55">
+                It was a pleasure having you at our table. We hope to see you again soon.
+              </p>
+              <Button
+                className="mt-5"
+                disabled={isPending}
+                onClick={rejoinWaitlist}
+                size="sm"
+              >
+                Rejoin the waitlist
+                <ArrowRight className="h-3.5 w-3.5" />
+              </Button>
+            </div>
+          )}
         </div>
       </PageTransition>
 
-      {/* ── Two column content ── */}
-      <div className="grid gap-5 lg:grid-cols-2">
-
-        {/* Left: booking form (invited) or notes form */}
+      {/* ── Booking form (INVITED only) ── */}
+      {guest.status === "INVITED" && (
         <PageTransition delay={0.06}>
-          <div className="rounded-2xl border border-foreground/8 bg-card/70 px-6 py-6 backdrop-blur sm:px-8 sm:py-7">
-            {guest.status === "INVITED" ? (
-              <form className="space-y-6" onSubmit={onBooking}>
+          <div className="mb-6 rounded-2xl border border-foreground/8 bg-white/60 px-7 py-6 backdrop-blur">
+            <div className="mb-5 flex items-center gap-2">
+              <CalendarDays className="h-4 w-4 text-foreground/35" />
+              <h2 className="font-serif text-2xl">Choose a date</h2>
+            </div>
+
+            <form className="space-y-5" onSubmit={onBooking}>
+              {/* Available slots */}
+              {data.availableSlots.length > 0 && (
                 <div>
-                  <h2 className="font-serif text-2xl">Choose a window</h2>
-                  <p className="mt-1 text-sm text-foreground/45">Available days are softly highlighted.</p>
-                </div>
-
-                <Calendar
-                  modifiers={{ available: slotDates }}
-                  modifiersClassNames={{ available: "bg-sage/20 rounded-full" }}
-                />
-
-                {data.availableSlots.length > 0 && (
+                  <p className="mb-3 text-xs uppercase tracking-widest text-foreground/40">
+                    Open slots
+                  </p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {data.availableSlots.map((slot) => {
                       const sel = selectedSlotId === slot.id;
@@ -290,8 +295,8 @@ export function DashboardClient() {
                           className={cn(
                             "relative rounded-xl border px-4 py-3.5 text-left text-sm transition-all",
                             sel
-                              ? "border-accent/40 bg-accent/6 shadow-sm"
-                              : "border-foreground/8 bg-white/40 hover:bg-white/70",
+                              ? "border-accent/50 bg-accent/5 shadow-sm"
+                              : "border-foreground/8 bg-white/40 hover:bg-white/80",
                           )}
                           key={slot.id}
                           onClick={() => toggleSlot(slot.id)}
@@ -302,36 +307,44 @@ export function DashboardClient() {
                               <Check className="h-2.5 w-2.5 text-white" />
                             </span>
                           )}
-                          <span className="block font-medium">{formatShortDate(new Date(slot.date))}</span>
-                          <span className="mt-0.5 block text-foreground/45">{formatTimeRange(slot.startTime, slot.endTime)}</span>
+                          <span className="block font-medium leading-snug">
+                            {formatShortDate(new Date(slot.date))}
+                          </span>
+                          <span className="mt-0.5 block text-foreground/45">
+                            {formatTimeRange(slot.startTime, slot.endTime)}
+                          </span>
                         </button>
                       );
                     })}
                   </div>
-                )}
+                  {selectedSlot && (
+                    <div className="mt-2 flex items-center gap-2 rounded-lg bg-foreground/4 px-3 py-2 text-sm">
+                      <Check className="h-3 w-3 shrink-0 text-foreground/40" />
+                      <span className="text-foreground/60">
+                        {formatShortDate(new Date(selectedSlot.date))} ·{" "}
+                        {formatTimeRange(selectedSlot.startTime, selectedSlot.endTime)}
+                      </span>
+                      <button
+                        className="ml-auto text-xs text-foreground/35 hover:text-foreground"
+                        onClick={() => setSelectedSlotId("")}
+                        type="button"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              )}
 
-                {!data.availableSlots.length && (
-                  <p className="text-sm text-foreground/40">No open slots yet.</p>
-                )}
-
-                {selectedSlot ? (
-                  <div className="flex items-center gap-2 rounded-xl bg-sage/10 px-4 py-2.5 text-sm">
-                    <Check className="h-3.5 w-3.5 shrink-0 text-foreground/50" />
-                    <span className="text-foreground/70">
-                      {formatShortDate(new Date(selectedSlot.date))} · {formatTimeRange(selectedSlot.startTime, selectedSlot.endTime)}
-                    </span>
-                    <button
-                      className="ml-auto text-xs text-foreground/35 hover:text-foreground"
-                      onClick={() => setSelectedSlotId("")}
-                      type="button"
-                    >
-                      clear
-                    </button>
-                  </div>
-                ) : (
+              {/* Custom date / time */}
+              {!selectedSlotId && (
+                <div>
+                  <p className="mb-3 text-xs uppercase tracking-widest text-foreground/40">
+                    {data.availableSlots.length > 0 ? "Or suggest another night" : "Suggest a night"}
+                  </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="grid gap-1.5">
-                      <Label htmlFor="requestedDate">Request another date</Label>
+                      <Label htmlFor="requestedDate">Date</Label>
                       <Input id="requestedDate" name="requestedDate" type="date" />
                     </div>
                     <div className="grid gap-1.5">
@@ -339,106 +352,89 @@ export function DashboardClient() {
                       <Input id="requestedTime" name="requestedTime" type="time" />
                     </div>
                   </div>
-                )}
-
-                <div className="grid gap-1.5">
-                  <Label htmlFor="notes">Note</Label>
-                  <Textarea id="notes" name="notes" placeholder="Any preferences or notes?" />
                 </div>
+              )}
 
-                <Button className="w-full sm:w-auto" disabled={isPending} type="submit">
-                  <Send className="h-3.5 w-3.5" />
-                  {isPending ? "Sending..." : "Send request"}
-                </Button>
-              </form>
-            ) : (
-              <form className="space-y-5" onSubmit={onUpdate}>
-                <div className="flex items-center gap-2 pb-1">
-                  <Pencil className="h-3.5 w-3.5 text-foreground/40" />
-                  <h2 className="font-serif text-2xl">Your notes</h2>
-                </div>
+              <div className="grid gap-1.5">
+                <Label htmlFor="notes">Note to Josh and Leigh</Label>
+                <Textarea
+                  id="notes"
+                  name="notes"
+                  placeholder="Any preferences or things we should know?"
+                />
+              </div>
 
-                <div className="grid gap-1.5">
-                  <Label htmlFor="name">Name</Label>
-                  <Input defaultValue={guest.name} id="name" name="name" required />
-                </div>
-
-                <div className="grid gap-1.5">
-                  <Label>Email</Label>
-                  <Input disabled value={guest.email} />
-                </div>
-
-                <div className="grid gap-1.5">
-                  <Label htmlFor="allergies">Allergies</Label>
-                  <Textarea
-                    defaultValue={guest.allergies ?? ""}
-                    id="allergies"
-                    name="allergies"
-                    placeholder="Anything we should avoid?"
-                  />
-                </div>
-
-                <div className="grid gap-1.5">
-                  <Label htmlFor="favoriteCuisines">Favorite cuisines</Label>
-                  <Textarea
-                    defaultValue={guest.favoriteCuisines ?? ""}
-                    id="favoriteCuisines"
-                    name="favoriteCuisines"
-                    placeholder="Noodles, handmade pasta, crispy rice..."
-                  />
-                </div>
-
-                <Button className="w-full sm:w-auto" disabled={isPending} type="submit">
-                  {isPending ? "Saving..." : "Save notes"}
-                </Button>
-              </form>
-            )}
+              <Button className="w-full sm:w-auto" disabled={isPending} type="submit">
+                <Send className="h-3.5 w-3.5" />
+                {isPending ? "Sending..." : "Send request"}
+              </Button>
+            </form>
           </div>
-        </PageTransition>
 
-        {/* Right: current booking info (non-invited) or empty state */}
-        <PageTransition delay={0.1}>
-          <div className="rounded-2xl border border-foreground/8 bg-card/70 px-6 py-6 backdrop-blur sm:px-8 sm:py-7">
-            <div className="flex items-center gap-2 pb-5">
-              <CalendarDays className="h-3.5 w-3.5 text-foreground/40" />
-              <h2 className="font-serif text-2xl">Booking</h2>
+          {/* Current pending request summary */}
+          {data.booking && (
+            <div className="mb-6 rounded-2xl border border-foreground/8 bg-white/40 px-7 py-5 backdrop-blur">
+              <p className="text-xs uppercase tracking-widest text-foreground/35 mb-2">
+                Current request
+              </p>
+              <p className="text-sm font-medium text-foreground/70">
+                {label ?? "Submitted — awaiting confirmation"}
+              </p>
+              {data.booking.notes && (
+                <p className="mt-1.5 text-sm italic text-foreground/45">
+                  &ldquo;{data.booking.notes}&rdquo;
+                </p>
+              )}
+            </div>
+          )}
+        </PageTransition>
+      )}
+
+      {/* ── Edit details ── */}
+      <PageTransition delay={0.1}>
+        <div className="rounded-2xl border border-foreground/8 bg-white/60 px-7 py-6 backdrop-blur">
+          <div className="mb-5 flex items-center gap-2">
+            <Pencil className="h-4 w-4 text-foreground/35" />
+            <h2 className="font-serif text-2xl">Your details</h2>
+          </div>
+
+          <form className="space-y-4" onSubmit={onUpdate}>
+            <div className="grid gap-1.5">
+              <Label htmlFor="name">Name</Label>
+              <Input defaultValue={guest.name} id="name" name="name" required />
             </div>
 
-            {data.booking ? (
-              <div className="space-y-3">
-                <div className="rounded-xl bg-white/50 px-5 py-4">
-                  <p className="text-xs uppercase tracking-widest text-foreground/40 mb-1">
-                    {data.booking.status.toLowerCase()}
-                  </p>
-                  <p className="font-medium text-foreground/80">
-                    {label ?? "Awaiting details"}
-                  </p>
-                  {data.booking.notes && (
-                    <p className="mt-2 text-sm text-foreground/50 italic">
-                      &ldquo;{data.booking.notes}&rdquo;
-                    </p>
-                  )}
-                </div>
+            <div className="grid gap-1.5">
+              <Label>Email</Label>
+              <Input disabled value={guest.email} />
+            </div>
 
-                {guest.status === "INVITED" && data.booking.status === "PENDING" && (
-                  <p className="text-xs text-foreground/40 px-1">
-                    Josh and Leigh will confirm your request shortly.
-                  </p>
-                )}
-              </div>
-            ) : (
-              <div className="flex flex-col items-start gap-3 rounded-xl bg-white/30 px-5 py-8">
-                <p className="text-sm text-foreground/40">No booking yet.</p>
-                {guest.status === "INVITED" && (
-                  <p className="text-sm text-foreground/40">
-                    Choose a date on the left to get started.
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-        </PageTransition>
-      </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="allergies">Allergies or dietary restrictions</Label>
+              <Textarea
+                defaultValue={guest.allergies ?? ""}
+                id="allergies"
+                name="allergies"
+                placeholder="Anything we should avoid?"
+              />
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="favoriteCuisines">Favourite cuisines</Label>
+              <Textarea
+                defaultValue={guest.favoriteCuisines ?? ""}
+                id="favoriteCuisines"
+                name="favoriteCuisines"
+                placeholder="What cuisines do you love most?"
+              />
+            </div>
+
+            <Button className="w-full sm:w-auto" disabled={isPending} type="submit">
+              {isPending ? "Saving..." : "Save details"}
+            </Button>
+          </form>
+        </div>
+      </PageTransition>
     </main>
   );
 }

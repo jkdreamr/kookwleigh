@@ -8,14 +8,15 @@ import {
   formatTimeRange,
 } from "@/lib/dates";
 import {
-  sendBookingCancelledEmail,
+  notifyHostBookingConfirmed,
   sendBookingConfirmedEmail,
   sendBookingDeclinedEmail,
+  sendHostCancelledEmail,
 } from "@/lib/email";
 import { parseJsonBody } from "@/lib/utils";
 import { requireAdminSession } from "@/lib/session";
 import { adminBookingSchema } from "@/lib/validators";
-import { serializePendingBooking } from "@/lib/waitlist";
+import { rebalanceWaitlistPositions, serializePendingBooking } from "@/lib/waitlist";
 
 export const dynamic = "force-dynamic";
 
@@ -63,6 +64,8 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "Booking not found." }, { status: 404 });
     }
 
+    // ── Decline a pending booking request ──────────────────────────────────
+    // Guest stays INVITED so they can submit a new request.
     if (payload.action === "decline") {
       const declined = await db.booking.update({
         data: { status: BookingStatus.CANCELLED },
@@ -75,8 +78,12 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ booking: serializePendingBooking(declined) });
     }
 
+    // ── Cancel a confirmed booking (host-initiated) ────────────────────────
+    // Guest moves to WAITLISTED at position #1 (front of line) so they are
+    // prioritised for the next dinner.
     if (payload.action === "cancel") {
       const cancelled = await db.$transaction(async (tx) => {
+        // Free the slot
         if (booking.slotId) {
           await tx.availableSlot.update({
             data: { isBooked: false },
@@ -90,10 +97,13 @@ export async function PATCH(request: Request) {
           where: { id: booking.id },
         });
 
+        // Give the guest position 0 then rebalance so they land at #1
         await tx.guest.update({
-          data: { status: GuestStatus.COMPLETED },
+          data: { position: 0, status: GuestStatus.WAITLISTED },
           where: { id: booking.guestId },
         });
+
+        await rebalanceWaitlistPositions(tx);
 
         return updated;
       });
@@ -102,14 +112,15 @@ export async function PATCH(request: Request) {
         ? formatDisplayDate(cancelled.slot.date)
         : cancelled.requestedDate
           ? formatDisplayDate(cancelled.requestedDate)
-          : "the selected date";
+          : "your upcoming dinner";
       const timeLabel = cancelled.slot
         ? formatTimeRange(cancelled.slot.startTime, cancelled.slot.endTime)
         : cancelled.requestedTime
           ? formatTimeLabel(cancelled.requestedTime)
-          : "the selected time";
+          : "";
 
-      await sendBookingCancelledEmail({
+      // Email the guest an apology
+      await sendHostCancelledEmail({
         dateLabel,
         email: cancelled.guest.email,
         timeLabel,
@@ -118,6 +129,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ booking: serializePendingBooking(cancelled) });
     }
 
+    // ── Confirm a pending booking request ─────────────────────────────────
     const confirmed = await db.$transaction(async (tx) => {
       if (booking.slotId) {
         const slot = await tx.availableSlot.findUnique({
@@ -166,9 +178,18 @@ export async function PATCH(request: Request) {
         ? formatTimeLabel(confirmed.requestedTime)
         : "the selected time";
 
+    // Email the guest their confirmation
     await sendBookingConfirmedEmail({
       dateLabel,
       email: confirmed.guest.email,
+      timeLabel,
+    });
+
+    // Notify the host too
+    await notifyHostBookingConfirmed({
+      dateLabel,
+      guestEmail: confirmed.guest.email,
+      guestName: confirmed.guest.name,
       timeLabel,
     });
 

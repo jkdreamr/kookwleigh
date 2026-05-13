@@ -16,10 +16,14 @@ export async function GET() {
     return unauthorized();
   }
 
-  const [waitlisted, activeMeals] = await Promise.all([
+  const [waitlisted, invited, activeMeals] = await Promise.all([
     db.guest.findMany({
       orderBy: [{ position: "asc" }, { createdAt: "asc" }],
       where: { status: GuestStatus.WAITLISTED },
+    }),
+    db.guest.findMany({
+      orderBy: { createdAt: "asc" },
+      where: { status: GuestStatus.INVITED },
     }),
     db.guest.findMany({
       include: {
@@ -36,6 +40,7 @@ export async function GET() {
 
   return Response.json({
     activeMeals: activeMeals.map(serializeActiveMeal),
+    invited: invited.map(serializeGuest),
     waitlisted: waitlisted.map(serializeGuest),
   });
 }

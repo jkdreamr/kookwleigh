@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { GuestStatus } from "@prisma/client";
 import { apiError, unauthorized } from "@/app/api/_helpers";
 import { db } from "@/lib/db";
-import { sendWaitlistRemovedEmail } from "@/lib/email";
+import { notifyHostDinnerComplete, sendDinnerCompleteEmail } from "@/lib/email";
 import { parseJsonBody } from "@/lib/utils";
 import { requireAdminSession } from "@/lib/session";
 import { completeGuestSchema } from "@/lib/validators";
@@ -19,6 +19,7 @@ export async function POST(request: Request) {
     const payload = completeGuestSchema.parse(await parseJsonBody(request));
 
     if (payload.requeue) {
+      // Put the guest back at the end of the waitlist
       await db.$transaction(async (tx) => {
         const position = await getNextWaitlistPosition(tx);
 
@@ -40,13 +41,18 @@ export async function POST(request: Request) {
       }
 
       await db.guest.update({
-        data: {
-          status: GuestStatus.COMPLETED,
-        },
+        data: { status: GuestStatus.COMPLETED },
         where: { id: payload.guestId },
       });
 
-      await sendWaitlistRemovedEmail(guest.email);
+      // Thank-you email to the guest
+      await sendDinnerCompleteEmail(guest.email);
+
+      // Notify host too
+      await notifyHostDinnerComplete({
+        guestEmail: guest.email,
+        guestName: guest.name,
+      });
     }
 
     return NextResponse.json({ ok: true });

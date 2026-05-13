@@ -42,6 +42,7 @@ export type ActiveMealView = GuestView & {
 
 export type AdminGuestsResponse = {
   activeMeals: ActiveMealView[];
+  invited: GuestView[];
   waitlisted: GuestView[];
 };
 
