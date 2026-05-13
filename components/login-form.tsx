@@ -29,7 +29,7 @@ export function LoginForm() {
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
-        setError(data.error ?? "Could not log in.");
+        setError(data.error ?? "Could not find that email. Did you use a different address?");
         return;
       }
 
@@ -41,13 +41,21 @@ export function LoginForm() {
   return (
     <form className="space-y-5" onSubmit={onSubmit}>
       <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" placeholder="you@example.com" required type="email" />
+        <Label htmlFor="email">Your email</Label>
+        <Input
+          autoComplete="email"
+          id="email"
+          inputMode="email"
+          name="email"
+          placeholder="you@example.com"
+          required
+          type="email"
+        />
       </div>
       <FormStatus error={error} />
       <Button className="w-full" disabled={isPending} type="submit">
-        {isPending ? "Checking..." : "Enter dashboard"}
-        <ArrowRight className="h-4 w-4" />
+        {isPending ? "Looking you up..." : "View my spot"}
+        {!isPending && <ArrowRight className="h-4 w-4" />}
       </Button>
     </form>
   );

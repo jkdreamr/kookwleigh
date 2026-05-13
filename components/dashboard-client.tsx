@@ -240,12 +240,15 @@ export function DashboardClient() {
               {label && (
                 <p className="mt-2 text-sm font-medium text-foreground/65">{label}</p>
               )}
+              <p className="mt-2 text-sm text-foreground/45">
+                Something come up? You can cancel below and we will free the slot.
+              </p>
               <button
-                className="mt-4 text-sm text-foreground/40 underline-offset-2 hover:text-foreground/70 hover:underline transition"
+                className="mt-4 rounded-full border border-foreground/12 bg-white/50 px-4 py-2 text-sm text-foreground/55 transition hover:border-red-200/80 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
                 disabled={isPending}
                 onClick={cancelBooking}
               >
-                Need to cancel?
+                Cancel my booking
               </button>
             </div>
           )}
@@ -284,8 +287,11 @@ export function DashboardClient() {
               {/* Available slots */}
               {data.availableSlots.length > 0 && (
                 <div>
-                  <p className="mb-3 text-xs uppercase tracking-widest text-foreground/40">
+                  <p className="mb-1 text-xs uppercase tracking-widest text-foreground/40">
                     Open slots
+                  </p>
+                  <p className="mb-3 text-xs text-foreground/40">
+                    Select one, or scroll down to suggest your own date.
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
                     {data.availableSlots.map((slot) => {
@@ -340,7 +346,7 @@ export function DashboardClient() {
               {!selectedSlotId && (
                 <div>
                   <p className="mb-3 text-xs uppercase tracking-widest text-foreground/40">
-                    {data.availableSlots.length > 0 ? "Or suggest another night" : "Suggest a night"}
+                    {data.availableSlots.length > 0 ? "Or suggest a different night" : "Suggest a night that works for you"}
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <div className="grid gap-1.5">

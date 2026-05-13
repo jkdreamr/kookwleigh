@@ -35,7 +35,7 @@ export function JoinForm() {
 
       if (!response.ok) {
         const data = (await response.json()) as { error?: string };
-        setError(data.error ?? "Could not join the waitlist.");
+        setError(data.error ?? "Something went wrong. Please try again.");
         return;
       }
 
@@ -47,30 +47,62 @@ export function JoinForm() {
   return (
     <form className="space-y-5" onSubmit={onSubmit}>
       <div className="grid gap-2">
-        <Label htmlFor="name">Name</Label>
-        <Input id="name" name="name" placeholder="Josh Koo" required />
+        <Label htmlFor="name">Your name</Label>
+        <Input
+          autoComplete="name"
+          id="name"
+          maxLength={120}
+          name="name"
+          placeholder="First and last name"
+          required
+        />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="email">Email</Label>
-        <Input id="email" name="email" placeholder="you@example.com" required type="email" />
+        <Label htmlFor="email">Email address</Label>
+        <Input
+          autoComplete="email"
+          id="email"
+          inputMode="email"
+          name="email"
+          placeholder="you@example.com"
+          required
+          type="email"
+        />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="allergies">Allergies</Label>
-        <Textarea id="allergies" name="allergies" placeholder="Anything we should avoid?" />
+        <Label htmlFor="allergies">
+          Allergies or dietary restrictions
+          <span className="ml-1 text-foreground/40">(optional)</span>
+        </Label>
+        <Textarea
+          id="allergies"
+          maxLength={500}
+          name="allergies"
+          placeholder="Anything we should avoid?"
+          rows={2}
+        />
       </div>
       <div className="grid gap-2">
-        <Label htmlFor="favoriteCuisines">Favorite cuisines or foods</Label>
+        <Label htmlFor="favoriteCuisines">
+          Favourite foods or cuisines
+          <span className="ml-1 text-foreground/40">(optional)</span>
+        </Label>
         <Textarea
           id="favoriteCuisines"
+          maxLength={500}
           name="favoriteCuisines"
-          placeholder="Noodles, handmade pasta, crispy rice..."
+          placeholder="Handmade pasta, crispy rice, anything with good butter..."
+          rows={2}
         />
       </div>
       <FormStatus error={error} />
       <Button className="w-full" disabled={isPending} type="submit">
-        {isPending ? "Joining..." : "Join the Waitlist"}
-        <ArrowRight className="h-4 w-4" />
+        {isPending ? "Adding you to the list..." : "Join the waitlist"}
+        {!isPending && <ArrowRight className="h-4 w-4" />}
       </Button>
+      <p className="text-center text-xs text-foreground/35">
+        Your email is only used to manage your place on the waitlist.
+      </p>
     </form>
   );
 }

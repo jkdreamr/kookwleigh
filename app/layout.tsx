@@ -16,14 +16,30 @@ const inter = Inter({
   display: "swap",
 });
 
+const appUrl = process.env.APP_URL ?? "http://localhost:3000";
+
 export const metadata: Metadata = {
-  metadataBase: new URL(process.env.APP_URL ?? "http://localhost:3000"),
+  metadataBase: new URL(appUrl),
   title: {
-    default: "kookwleigh Waitlist",
-    template: "%s | kookwleigh Waitlist",
+    default: "kookwleigh",
+    template: "%s · kookwleigh",
   },
   description:
-    "An editorial dinner guest waitlist for Josh and Leigh's cooking table.",
+    "A dinner table waitlist for friends and family. Small, thoughtful, and cooked by Josh and Leigh.",
+  openGraph: {
+    type: "website",
+    siteName: "kookwleigh",
+    title: "kookwleigh — Josh and Leigh's dinner table",
+    description:
+      "A small dinner waitlist for people who want to eat something thoughtful and cozy with Josh and Leigh. Join the list.",
+    url: appUrl,
+  },
+  twitter: {
+    card: "summary",
+    title: "kookwleigh — dinner table waitlist",
+    description:
+      "A small dinner waitlist for people who want to eat something thoughtful and cozy with Josh and Leigh.",
+  },
 };
 
 export default function RootLayout({

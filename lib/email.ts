@@ -128,9 +128,9 @@ export async function sendWaitlistConfirmationEmail({
       "We will reach out personally when it is your turn to book.",
     ],
     headline: "You are on the list.",
-    preview: `Welcome, ${name}. We cannot wait to have you at our table.`,
-    subject: "You are on the kookwleigh waitlist",
-    text: "We look forward to hosting you soon.",
+    preview: `Hi ${name} — we are so glad you joined. We will be in touch when a dinner spot opens up.`,
+    subject: "You are on the waitlist",
+    text: "We look forward to hosting you.",
     to: email,
   });
 }
@@ -143,10 +143,10 @@ export async function sendInviteEmail(email: string) {
       "Log in with this email to see available dates and request a booking.",
       "If none of the open slots work, you can suggest your own night.",
     ],
-    headline: "It is your turn to book.",
-    preview: "We are ready to host you — pick a date and we will confirm shortly.",
-    subject: "Your kookwleigh invitation is ready",
-    text: "We look forward to seeing you soon.",
+    headline: "Your invitation is ready.",
+    preview: "We have been looking forward to having you — your spot at the table is waiting.",
+    subject: "Your invitation is ready",
+    text: "We cannot wait to cook for you.",
     to: email,
   });
 }
@@ -170,8 +170,8 @@ export async function sendBookingConfirmedEmail({
     ],
     headline: "Your dinner is confirmed.",
     preview: `We are looking forward to having you on ${dateLabel} at ${timeLabel}.`,
-    subject: "Your kookwleigh dinner is confirmed",
-    text: `We are so excited to have you. See you on ${dateLabel} at ${timeLabel}.`,
+    subject: "Dinner confirmed",
+    text: `We are so excited. See you on ${dateLabel} at ${timeLabel}.`,
     to: email,
   });
 }
@@ -186,7 +186,7 @@ export async function sendBookingDeclinedEmail(email: string) {
     ],
     headline: "Let us find another time.",
     preview: "That request did not work out, but we would still love to have you.",
-    subject: "Let us find another kookwleigh dinner time",
+    subject: "Let us find another time",
     text: "Please choose another date and we will confirm as soon as possible.",
     to: email,
   });
@@ -211,8 +211,8 @@ export async function sendHostCancelledEmail({
     ],
     headline: "We had to cancel — we are sorry.",
     preview: "Something came up on our end and we have had to cancel your dinner. We are truly sorry.",
-    subject: "Your kookwleigh dinner has been cancelled",
-    text: "We apologise for the short notice and will be in touch very soon to reschedule.",
+    subject: "Your dinner has been cancelled",
+    text: "We are sorry for the short notice and will be in touch soon.",
     to: email,
   });
 }
@@ -227,8 +227,8 @@ export async function sendGuestCancelledGuestEmail(email: string) {
     ],
     headline: "Booking cancelled.",
     preview: "No worries at all — life happens. We would still love to have you over.",
-    subject: "Your kookwleigh booking has been cancelled",
-    text: "We hope to see you soon. Come back and book a new date whenever you are ready.",
+    subject: "Booking cancelled",
+    text: "We hope to see you soon. Come back and pick a new date whenever you are ready.",
     to: email,
   });
 }
@@ -242,8 +242,8 @@ export async function sendDinnerCompleteEmail(email: string) {
     ],
     headline: "Thank you for joining us.",
     preview: "It was a wonderful evening — we hope you had as much fun as we did.",
-    subject: "Thank you for dinner",
-    text: "We hope to see you again soon.",
+    subject: "So glad you came",
+    text: "We hope to see you at our table again.",
     to: email,
   });
 }

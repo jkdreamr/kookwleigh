@@ -1,68 +1,89 @@
 import Link from "next/link";
-import { ArrowRight, CalendarDays, Lock, Sparkles } from "lucide-react";
+import { ArrowRight, Lock } from "lucide-react";
 import { BrandMark } from "@/components/brand-mark";
 import { PageTransition } from "@/components/page-transition";
 import { Button } from "@/components/ui/button";
 
+export const metadata = {
+  title: "kookwleigh",
+};
+
 export default function Home() {
   return (
     <main className="min-h-screen">
-      <section className="relative flex min-h-[92vh] overflow-hidden">
+
+      {/* ── Hero ── */}
+      <section className="relative flex min-h-[92vh] overflow-hidden bg-[#1a150f]">
+        {/* Background image — fallback to dark bg above if it fails to load */}
         <div
           aria-hidden
           className="absolute inset-0 bg-cover bg-center"
           style={{
             backgroundImage:
-              "url('https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=2200&q=85')",
+              "url('https://images.unsplash.com/photo-1551218808-94e220e084d2?auto=format&fit=crop&w=2200&q=80')",
           }}
         />
-        <div aria-hidden className="absolute inset-0 bg-[#16120e]/45" />
-        <div aria-hidden className="absolute inset-x-0 bottom-0 h-40 bg-gradient-to-t from-background to-transparent" />
+        <div aria-hidden className="absolute inset-0 bg-[#16120e]/50" />
+        <div aria-hidden className="absolute inset-x-0 bottom-0 h-48 bg-gradient-to-t from-background to-transparent" />
 
         <div className="relative z-10 flex w-full flex-col justify-between px-5 py-6 sm:px-8 lg:px-12">
+
+          {/* Nav */}
           <nav className="flex items-center justify-between text-white">
-            <BrandMark href="/" />
+            <BrandMark href="/" light />
             <div className="flex items-center gap-2 sm:gap-3">
-              <Button asChild className="text-white hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
-                <Link href="/login">Login</Link>
+              <Button
+                asChild
+                className="text-white/80 hover:bg-white/10 hover:text-white"
+                size="sm"
+                variant="ghost"
+              >
+                <Link href="/login">Log in</Link>
               </Button>
-              <Button asChild className="hidden text-white hover:bg-white/10 hover:text-white sm:inline-flex" size="sm" variant="ghost">
+              <Button
+                asChild
+                className="hidden text-white/70 hover:bg-white/10 hover:text-white sm:inline-flex"
+                size="sm"
+                variant="ghost"
+              >
                 <Link href="/admin/login">
                   <Lock className="h-3.5 w-3.5" />
                   Host
                 </Link>
               </Button>
-              <Button asChild size="sm" variant="secondary">
-                <Link href="/join">Join</Link>
+              <Button asChild size="sm">
+                <Link href="/join">Join the list</Link>
               </Button>
             </div>
           </nav>
 
+          {/* Hero copy */}
           <PageTransition>
             <div className="mb-12 max-w-4xl text-white">
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-sm backdrop-blur">
-                <Sparkles className="h-4 w-4" />
-                Join our table
-              </div>
-              <h1 className="font-serif text-7xl leading-none sm:text-8xl lg:text-9xl">
+              <p className="mb-5 text-xs font-medium uppercase tracking-[0.28em] text-white/55">
+                By invitation
+              </p>
+              <h1 className="font-serif text-7xl leading-[0.92] sm:text-8xl lg:text-[9rem]">
                 kookwleigh
               </h1>
-              <p className="mt-6 max-w-xl text-base leading-7 text-white/85 sm:text-lg">
-                A small dinner waitlist for people who want to eat something thoughtful,
-                cozy, and probably a little experimental with Josh and Leigh.
+              <p className="mt-7 max-w-lg text-base leading-7 text-white/75 sm:text-lg">
+                A small dinner table for people we love. Josh and Leigh cook — you show up hungry.
+                Get on the list and we will reach out when a seat opens.
               </p>
-              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+              <div className="mt-9 flex flex-wrap gap-3">
                 <Button asChild size="lg">
                   <Link href="/join">
-                    Join the Waitlist
+                    Join the waitlist
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                 </Button>
-                <Button asChild size="lg" variant="outline">
-                  <Link href="/login">
-                    <span className="hidden sm:inline">I am already in line</span>
-                    <span className="sm:hidden">Already in line</span>
-                  </Link>
+                <Button
+                  asChild
+                  className="border-white/20 bg-white/10 text-white backdrop-blur hover:bg-white/20"
+                  size="lg"
+                  variant="outline"
+                >
+                  <Link href="/login">Already on the list</Link>
                 </Button>
               </div>
             </div>
@@ -70,34 +91,77 @@ export default function Home() {
         </div>
       </section>
 
-      <section className="mx-auto grid max-w-6xl gap-5 px-5 pb-14 pt-6 sm:px-8 lg:grid-cols-3">
+      {/* ── How it works ── */}
+      <section className="mx-auto grid max-w-5xl gap-5 px-5 pb-14 pt-8 sm:px-8 lg:grid-cols-3">
         {[
-          ["01", "Tell us your food notes", "Allergies, cravings, and little preferences stay with your guest record."],
-          ["02", "Wait for the invite", "Josh and Leigh invite guests from the queue when a dinner window opens."],
-          ["03", "Choose a cozy slot", "Pick an open date or request another time from your dashboard."],
+          [
+            "01",
+            "Join and tell us about yourself",
+            "Add your name, email, any allergies, and the flavours you love. It helps us cook for you.",
+          ],
+          [
+            "02",
+            "Wait for your invitation",
+            "When a dinner window opens, we work through the list and send you a personal invite.",
+          ],
+          [
+            "03",
+            "Pick a date and come hungry",
+            "Choose from available evenings or suggest your own. We will confirm and see you soon.",
+          ],
         ].map(([number, title, copy]) => (
-          <div className="rounded-lg border border-foreground/10 bg-white/65 p-5 shadow-editorial" key={number}>
-            <div className="mb-5 flex h-10 w-10 items-center justify-center rounded-full bg-powder text-sm font-semibold">
+          <div
+            className="rounded-xl border border-foreground/10 bg-white/65 p-6 shadow-editorial"
+            key={number}
+          >
+            <div className="mb-5 flex h-9 w-9 items-center justify-center rounded-full bg-powder text-xs font-semibold tracking-wide">
               {number}
             </div>
-            <h2 className="font-serif text-2xl">{title}</h2>
-            <p className="mt-3 text-sm leading-7 text-foreground/65">{copy}</p>
+            <h2 className="font-serif text-xl leading-snug">{title}</h2>
+            <p className="mt-3 text-sm leading-[1.75] text-foreground/60">{copy}</p>
           </div>
         ))}
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 pb-20 sm:px-8">
-        <div className="grid gap-4 rounded-lg border border-foreground/10 bg-card/80 p-5 shadow-editorial md:grid-cols-[1fr_auto] md:items-center">
+      {/* ── Bottom CTA strip ── */}
+      <section className="mx-auto max-w-5xl px-5 pb-20 sm:px-8">
+        <div className="flex flex-col items-start justify-between gap-6 rounded-xl border border-foreground/10 bg-card/80 px-7 py-7 shadow-editorial sm:flex-row sm:items-center">
           <div>
-            <p className="eyebrow">Current rhythm</p>
-            <h2 className="mt-2 font-serif text-3xl">Small dinners, soft calendar.</h2>
+            <p className="eyebrow mb-2">One table at a time</p>
+            <h2 className="font-serif text-2xl sm:text-3xl">
+              Intimate dinners, whenever the calendar allows.
+            </h2>
           </div>
-          <div className="flex items-center gap-3 rounded-full bg-white/65 px-4 py-3 text-sm">
-            <CalendarDays className="h-4 w-4 text-accent" />
-            One table at a time
+          <div className="shrink-0">
+            <Button asChild size="lg">
+              <Link href="/join">
+                Get on the list
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            </Button>
           </div>
         </div>
       </section>
+
+      {/* ── Footer ── */}
+      <footer className="border-t border-foreground/8 px-5 pb-10 pt-8 sm:px-8">
+        <div className="mx-auto flex max-w-5xl flex-col items-start justify-between gap-4 sm:flex-row sm:items-center">
+          <div>
+            <span className="font-serif text-lg">kookwleigh</span>
+            <p className="mt-1 text-xs text-foreground/40">
+              A private dinner table by Josh and Leigh.
+            </p>
+          </div>
+          <div className="flex items-center gap-5 text-sm text-foreground/45">
+            <Link className="hover:text-foreground transition-colors" href="/login">
+              Log in
+            </Link>
+            <Link className="hover:text-foreground transition-colors" href="/join">
+              Join the list
+            </Link>
+          </div>
+        </div>
+      </footer>
     </main>
   );
 }

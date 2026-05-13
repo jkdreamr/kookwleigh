@@ -1,4 +1,9 @@
+import type { Metadata } from "next";
 import { ShieldCheck } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "Host login",
+};
 import { BrandMark } from "@/components/brand-mark";
 import { AdminLoginForm } from "@/components/admin-login-form";
 import { PageTransition } from "@/components/page-transition";
