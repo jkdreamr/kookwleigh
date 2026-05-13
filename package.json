@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "NODE_OPTIONS=--no-deprecation next dev",
-    "build": "NODE_OPTIONS=--no-deprecation node scripts/sync-prisma-artifacts.mjs && NODE_OPTIONS=--no-deprecation prisma generate && NODE_OPTIONS=--no-deprecation node scripts/migrate.mjs && NODE_OPTIONS=--no-deprecation next build",
+    "build": "NODE_OPTIONS=--no-deprecation node scripts/sync-prisma-artifacts.mjs && NODE_OPTIONS=--no-deprecation prisma generate && NODE_OPTIONS=--no-deprecation next build",
+    "db:migrate": "NODE_OPTIONS=--no-deprecation node scripts/sync-prisma-artifacts.mjs && NODE_OPTIONS=--no-deprecation node scripts/migrate.mjs",
     "start": "NODE_OPTIONS=--no-deprecation next start",
     "lint": "next lint",
     "postinstall": "node scripts/ensure-env.mjs && node scripts/sync-prisma-artifacts.mjs && prisma generate",
