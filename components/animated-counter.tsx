@@ -5,9 +5,11 @@ import { useEffect, useState } from "react";
 export function AnimatedCounter({
   value,
   prefix = "#",
+  light = false,
 }: {
   value: number;
   prefix?: string;
+  light?: boolean;
 }) {
   const [display, setDisplay] = useState(0);
 
@@ -28,7 +30,7 @@ export function AnimatedCounter({
 
   return (
     <div className="flex items-baseline gap-1 leading-none">
-      <span className="font-serif text-[5rem] leading-none tracking-tight text-foreground sm:text-[7rem] lg:text-[9rem]">
+      <span className={`font-serif text-[5rem] leading-none tracking-tight sm:text-[7rem] lg:text-[9rem] ${light ? "text-white" : "text-foreground"}`}>
         {prefix}{display}
       </span>
     </div>
