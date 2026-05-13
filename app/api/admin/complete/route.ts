@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GuestStatus } from "@prisma/client";
+import { BookingStatus, GuestStatus } from "@prisma/client";
 import { apiError, unauthorized } from "@/app/api/_helpers";
 import { db } from "@/lib/db";
 import { notifyHostDinnerComplete, sendDinnerCompleteEmail } from "@/lib/email";
@@ -32,26 +32,67 @@ export async function POST(request: Request) {
         });
       });
     } else {
-      const guest = await db.guest.findUnique({
-        where: { id: payload.guestId },
-      });
+      const completed = await db.$transaction(async (tx) => {
+        const guest = await tx.guest.findUnique({
+          include: {
+            bookings: {
+              include: { slot: true },
+              orderBy: { createdAt: "desc" },
+              where: { status: BookingStatus.CONFIRMED },
+            },
+          },
+          where: { id: payload.guestId },
+        });
 
-      if (!guest) {
-        return NextResponse.json({ error: "Guest not found." }, { status: 404 });
-      }
+        if (!guest) {
+          throw new Error("Guest not found.");
+        }
 
-      await db.guest.update({
-        data: { status: GuestStatus.COMPLETED },
-        where: { id: payload.guestId },
+        if (guest.status !== GuestStatus.SCHEDULED) {
+          throw new Error("Only scheduled guests can be completed.");
+        }
+
+        const booking = guest.bookings[0] ?? null;
+        const dinnerDate = booking?.slot?.date ?? booking?.requestedDate ?? null;
+        const dinnerTime = booking?.slot
+          ? `${booking.slot.startTime} - ${booking.slot.endTime}`
+          : booking?.requestedTime ?? null;
+
+        const dinner = await tx.completedDinner.create({
+          data: {
+            allergies: guest.allergies,
+            dinnerDate,
+            dinnerTime,
+            favoriteCuisines: guest.favoriteCuisines,
+            guestEmail: guest.email,
+            guestName: guest.name,
+            menu: payload.menu || null,
+            notes: payload.notes || null,
+            photoDataUrls: payload.photoDataUrls.length
+              ? JSON.stringify(payload.photoDataUrls)
+              : null,
+          },
+        });
+
+        await tx.guest.update({
+          data: { status: GuestStatus.COMPLETED },
+          where: { id: payload.guestId },
+        });
+
+        return {
+          dinner,
+          guestEmail: guest.email,
+          guestName: guest.name,
+        };
       });
 
       // Thank-you email to the guest
-      await sendDinnerCompleteEmail(guest.email);
+      await sendDinnerCompleteEmail(completed.guestEmail);
 
       // Notify host too
       await notifyHostDinnerComplete({
-        guestEmail: guest.email,
-        guestName: guest.name,
+        guestEmail: completed.guestEmail,
+        guestName: completed.guestName,
       });
     }
 

@@ -2,7 +2,16 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarPlus, Check, LogOut, Send, Trash2, X } from "lucide-react";
+import {
+  CalendarPlus,
+  Check,
+  ImagePlus,
+  LogOut,
+  Send,
+  Trash2,
+  Utensils,
+  X,
+} from "lucide-react";
 import { showToast } from "@/components/toast";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +19,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 import {
   formatDisplayDate,
   formatShortDate,
@@ -18,9 +28,11 @@ import {
 } from "@/lib/dates";
 import type {
   AdminBookingsResponse,
+  AdminCompletedResponse,
   AdminGuestsResponse,
   AdminSlotsResponse,
   BookingView,
+  CompletedDinnerView,
 } from "@/lib/types";
 
 function bookingText(booking: BookingView | null) {
@@ -48,18 +60,25 @@ export function AdminClient() {
     confirmed: [],
     pending: [],
   });
+  const [completed, setCompleted] = useState<CompletedDinnerView[]>([]);
+  const [photoDrafts, setPhotoDrafts] = useState<Record<string, string[]>>({});
   const [slots, setSlots] = useState<AdminSlotsResponse>({ slots: [] });
   const [isPending, startTransition] = useTransition();
 
   async function loadAll() {
-    const [guestsRes, bookingsRes, slotsRes] = await Promise.all([
+    const [guestsRes, bookingsRes, slotsRes, completedRes] = await Promise.all([
       fetch("/api/admin/guests", { cache: "no-store" }),
       fetch("/api/admin/bookings", { cache: "no-store" }),
       fetch("/api/admin/slots", { cache: "no-store" }),
+      fetch("/api/admin/completed", { cache: "no-store" }),
     ]);
     if (guestsRes.ok) setGuests((await guestsRes.json()) as AdminGuestsResponse);
     if (bookingsRes.ok) setBookings((await bookingsRes.json()) as AdminBookingsResponse);
     if (slotsRes.ok) setSlots((await slotsRes.json()) as AdminSlotsResponse);
+    if (completedRes.ok) {
+      const payload = (await completedRes.json()) as AdminCompletedResponse;
+      setCompleted(payload.completed);
+    }
   }
 
   useEffect(() => {
@@ -103,6 +122,134 @@ export function AdminClient() {
     event.currentTarget.reset();
   }
 
+  async function readPhotoFiles(files: FileList | null) {
+    const selected = Array.from(files ?? []).slice(0, 6);
+
+    for (const file of selected) {
+      if (!file.type.startsWith("image/")) {
+        throw new Error("Only image uploads are supported.");
+      }
+
+      if (file.size > 1_500_000) {
+        throw new Error("Each photo must be under about 1MB.");
+      }
+    }
+
+    return Promise.all(
+      selected.map(
+        (file) =>
+          new Promise<string>((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onerror = () => reject(new Error("Could not read photo."));
+            reader.onload = () => {
+              if (typeof reader.result === "string") {
+                resolve(reader.result);
+              } else {
+                reject(new Error("Could not read photo."));
+              }
+            };
+            reader.readAsDataURL(file);
+          }),
+      ),
+    );
+  }
+
+  function completeDinner(event: React.FormEvent<HTMLFormElement>, guestId: string) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const fd = new FormData(form);
+
+    startTransition(async () => {
+      try {
+        const photoInput = form.elements.namedItem("photos");
+        const photoDataUrls = await readPhotoFiles(
+          photoInput instanceof HTMLInputElement ? photoInput.files : null,
+        );
+        const res = await fetch("/api/admin/complete", {
+          body: JSON.stringify({
+            guestId,
+            menu: String(fd.get("menu") ?? ""),
+            notes: String(fd.get("notes") ?? ""),
+            photoDataUrls,
+            requeue: false,
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "POST",
+        });
+
+        if (!res.ok) {
+          showToast(
+            ((await res.json()) as { error?: string }).error ??
+              "Could not complete dinner.",
+            "error",
+          );
+          return;
+        }
+
+        showToast("Dinner archived in Completed.");
+        form.reset();
+        await loadAll();
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "Photo upload failed.", "error");
+      }
+    });
+  }
+
+  function updateCompletedDinner(
+    event: React.FormEvent<HTMLFormElement>,
+    dinner: CompletedDinnerView,
+  ) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const fd = new FormData(form);
+    const draftedPhotos = photoDrafts[dinner.id];
+
+    startTransition(async () => {
+      try {
+        const res = await fetch("/api/admin/completed", {
+          body: JSON.stringify({
+            dinnerId: dinner.id,
+            menu: String(fd.get("menu") ?? ""),
+            notes: String(fd.get("notes") ?? ""),
+            photoDataUrls: draftedPhotos ?? dinner.photoDataUrls,
+          }),
+          headers: { "Content-Type": "application/json" },
+          method: "PATCH",
+        });
+
+        if (!res.ok) {
+          showToast(
+            ((await res.json()) as { error?: string }).error ??
+              "Could not update completed dinner.",
+            "error",
+          );
+          return;
+        }
+
+        setPhotoDrafts((current) => {
+          const next = { ...current };
+          delete next[dinner.id];
+          return next;
+        });
+        showToast("Completed dinner updated.");
+        await loadAll();
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "Update failed.", "error");
+      }
+    });
+  }
+
+  function onCompletedPhotoChange(dinnerId: string, files: FileList | null) {
+    startTransition(async () => {
+      try {
+        const photos = await readPhotoFiles(files);
+        setPhotoDrafts((current) => ({ ...current, [dinnerId]: photos }));
+      } catch (error) {
+        showToast(error instanceof Error ? error.message : "Photo upload failed.", "error");
+      }
+    });
+  }
+
   function logout() {
     startTransition(async () => {
       await fetch("/api/admin/login", { method: "DELETE" });
@@ -115,6 +262,7 @@ export function AdminClient() {
   const totalInvited = guests.invited.length;
   const totalPending = bookings.pending.length;
   const totalActive = guests.activeMeals.length;
+  const totalCompleted = completed.length;
 
   return (
     <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-10">
@@ -132,6 +280,7 @@ export function AdminClient() {
               { label: "invited", value: totalInvited },
               { label: "pending", value: totalPending },
               { label: "confirmed", value: totalActive },
+              { label: "completed", value: totalCompleted },
             ].map(({ label, value }) => (
               <div
                 key={label}
@@ -150,12 +299,13 @@ export function AdminClient() {
       </div>
 
       {/* Mobile stat strip */}
-      <div className="mb-6 grid grid-cols-4 gap-2 sm:hidden">
+      <div className="mb-6 grid grid-cols-5 gap-2 sm:hidden">
         {[
           { label: "waitlist", value: totalWaitlist },
           { label: "invited", value: totalInvited },
           { label: "pending", value: totalPending },
           { label: "confirmed", value: totalActive },
+          { label: "done", value: totalCompleted },
         ].map(({ label, value }) => (
           <div
             key={label}
@@ -173,6 +323,7 @@ export function AdminClient() {
           <TabsTrigger value="invited">Invited</TabsTrigger>
           <TabsTrigger value="bookings">Bookings</TabsTrigger>
           <TabsTrigger value="meals">Active dinners</TabsTrigger>
+          <TabsTrigger value="completed">Completed</TabsTrigger>
           <TabsTrigger value="slots">Slots</TabsTrigger>
         </TabsList>
 
@@ -377,46 +528,170 @@ export function AdminClient() {
                       <p>Cuisines: {guest.favoriteCuisines || "—"}</p>
                     </div>
                   </div>
-                  <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                    <Button
-                      className="w-full sm:w-auto"
-                      disabled={isPending}
-                      onClick={() =>
-                        mutate(
-                          "/api/admin/complete",
-                          { guestId: guest.id, requeue: false },
-                          "POST",
-                          "Dinner marked complete. Thank-you email sent.",
-                        )
-                      }
-                      size="sm"
-                    >
-                      <Check className="h-3.5 w-3.5" />
-                      Mark complete
-                    </Button>
-                    <Button
-                      className="w-full sm:w-auto"
-                      disabled={isPending}
-                      onClick={() =>
-                        mutate(
-                          "/api/admin/complete",
-                          { guestId: guest.id, requeue: true },
-                          "POST",
-                          "Guest added back to the waitlist.",
-                        )
-                      }
-                      size="sm"
-                      variant="outline"
-                    >
-                      Re-queue
-                    </Button>
-                  </div>
+                  <form
+                    className="grid gap-3 rounded-xl border border-foreground/8 bg-white/55 p-4 sm:min-w-[320px]"
+                    onSubmit={(event) => completeDinner(event, guest.id)}
+                  >
+                    <div className="grid gap-1.5">
+                      <Label htmlFor={`menu-${guest.id}`}>What you cooked</Label>
+                      <Input
+                        id={`menu-${guest.id}`}
+                        name="menu"
+                        placeholder="Mapo tofu, cucumber salad, mango pudding"
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor={`notes-${guest.id}`}>How it went</Label>
+                      <Textarea
+                        className="min-h-20"
+                        id={`notes-${guest.id}`}
+                        name="notes"
+                        placeholder="Funny moments, timing notes, what to repeat..."
+                      />
+                    </div>
+                    <div className="grid gap-1.5">
+                      <Label htmlFor={`photos-${guest.id}`}>Food photos</Label>
+                      <Input
+                        accept="image/*"
+                        id={`photos-${guest.id}`}
+                        multiple
+                        name="photos"
+                        type="file"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <Button
+                        className="w-full sm:w-auto"
+                        disabled={isPending}
+                        size="sm"
+                        type="submit"
+                      >
+                        <Check className="h-3.5 w-3.5" />
+                        Complete and archive
+                      </Button>
+                      <Button
+                        className="w-full sm:w-auto"
+                        disabled={isPending}
+                        onClick={() =>
+                          mutate(
+                            "/api/admin/complete",
+                            { guestId: guest.id, requeue: true },
+                            "POST",
+                            "Guest added back to the waitlist.",
+                          )
+                        }
+                        size="sm"
+                        type="button"
+                        variant="outline"
+                      >
+                        Re-queue
+                      </Button>
+                    </div>
+                  </form>
                 </CardContent>
               </Card>
             ))}
             {!guests.activeMeals.length && (
               <p className="rounded-xl bg-white/50 p-6 text-sm text-foreground/45">
                 No active dinners.
+              </p>
+            )}
+          </div>
+        </TabsContent>
+
+        {/* ── Completed dinners tab ── */}
+        <TabsContent value="completed">
+          <div className="grid gap-4">
+            {completed.map((dinner) => {
+              const photos = photoDrafts[dinner.id] ?? dinner.photoDataUrls;
+
+              return (
+                <Card key={dinner.id}>
+                  <CardContent className="grid gap-5 p-5 lg:grid-cols-[1fr_360px]">
+                    <div>
+                      <div className="flex flex-wrap items-baseline gap-2">
+                        <h2 className="font-serif text-xl">{dinner.guestName}</h2>
+                        <Badge>{formatShortDate(new Date(dinner.completedAt))}</Badge>
+                      </div>
+                      <p className="mt-0.5 text-sm text-foreground/50">{dinner.guestEmail}</p>
+                      <p className="mt-3 text-sm font-medium">
+                        {dinner.dinnerDate
+                          ? `${formatShortDate(new Date(dinner.dinnerDate))}${
+                              dinner.dinnerTime ? ` · ${dinner.dinnerTime}` : ""
+                            }`
+                          : "Dinner date not recorded"}
+                      </p>
+                      <div className="mt-3 grid gap-1 text-sm text-foreground/55">
+                        <p>Allergies: {dinner.allergies || "—"}</p>
+                        <p>Cuisines: {dinner.favoriteCuisines || "—"}</p>
+                      </div>
+                      {photos.length > 0 && (
+                        <div className="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3">
+                          {photos.map((photo, index) => (
+                            <div
+                              aria-label={`Dinner photo ${index + 1}`}
+                              className="aspect-square rounded-xl border border-foreground/10 bg-cover bg-center"
+                              key={`${dinner.id}-${index}`}
+                              role="img"
+                              style={{ backgroundImage: `url("${photo}")` }}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+
+                    <form
+                      className="grid gap-3 rounded-xl border border-foreground/8 bg-white/55 p-4"
+                      onSubmit={(event) => updateCompletedDinner(event, dinner)}
+                    >
+                      <div className="flex items-center gap-2">
+                        <Utensils className="h-4 w-4 text-accent" />
+                        <h3 className="font-serif text-lg">Dinner notes</h3>
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor={`completed-menu-${dinner.id}`}>What you cooked</Label>
+                        <Textarea
+                          className="min-h-20"
+                          defaultValue={dinner.menu ?? ""}
+                          id={`completed-menu-${dinner.id}`}
+                          name="menu"
+                          placeholder="Menu, prep notes, standout dishes..."
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor={`completed-notes-${dinner.id}`}>How it went</Label>
+                        <Textarea
+                          className="min-h-24"
+                          defaultValue={dinner.notes ?? ""}
+                          id={`completed-notes-${dinner.id}`}
+                          name="notes"
+                          placeholder="What worked, what to change, guest reactions..."
+                        />
+                      </div>
+                      <div className="grid gap-1.5">
+                        <Label htmlFor={`completed-photos-${dinner.id}`}>Replace photos</Label>
+                        <Input
+                          accept="image/*"
+                          id={`completed-photos-${dinner.id}`}
+                          multiple
+                          onChange={(event) =>
+                            onCompletedPhotoChange(dinner.id, event.currentTarget.files)
+                          }
+                          type="file"
+                        />
+                      </div>
+                      <Button disabled={isPending} size="sm" type="submit">
+                        <ImagePlus className="h-3.5 w-3.5" />
+                        Save archive
+                      </Button>
+                    </form>
+                  </CardContent>
+                </Card>
+              );
+            })}
+            {!completed.length && (
+              <p className="rounded-xl bg-white/50 p-6 text-sm text-foreground/45">
+                Completed dinners will show up here after you archive an active dinner.
               </p>
             )}
           </div>

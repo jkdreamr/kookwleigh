@@ -83,5 +83,33 @@ export const adminBookingSchema = z.object({
 
 export const completeGuestSchema = z.object({
   guestId: z.string().trim().min(1),
+  menu: z.string().trim().max(1200).optional().default(""),
+  notes: z.string().trim().max(2000).optional().default(""),
+  photoDataUrls: z
+    .array(
+      z
+        .string()
+        .startsWith("data:image/", "Photos must be uploaded as images.")
+        .max(1_500_000, "Each photo must be under about 1MB."),
+    )
+    .max(6, "Upload up to 6 photos per dinner.")
+    .optional()
+    .default([]),
   requeue: z.boolean().optional().default(false),
+});
+
+export const updateCompletedDinnerSchema = z.object({
+  dinnerId: z.string().trim().min(1),
+  menu: z.string().trim().max(1200).optional().default(""),
+  notes: z.string().trim().max(2000).optional().default(""),
+  photoDataUrls: z
+    .array(
+      z
+        .string()
+        .startsWith("data:image/", "Photos must be uploaded as images.")
+        .max(1_500_000, "Each photo must be under about 1MB."),
+    )
+    .max(6, "Upload up to 6 photos per dinner.")
+    .optional()
+    .default([]),
 });

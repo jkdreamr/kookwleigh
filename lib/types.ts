@@ -58,3 +58,22 @@ export type AdminBookingsResponse = {
 export type AdminSlotsResponse = {
   slots: SlotView[];
 };
+
+export type CompletedDinnerView = {
+  allergies: string | null;
+  completedAt: string;
+  createdAt: string;
+  dinnerDate: string | null;
+  dinnerTime: string | null;
+  favoriteCuisines: string | null;
+  guestEmail: string;
+  guestName: string;
+  id: string;
+  menu: string | null;
+  notes: string | null;
+  photoDataUrls: string[];
+};
+
+export type AdminCompletedResponse = {
+  completed: CompletedDinnerView[];
+};

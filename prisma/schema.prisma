@@ -62,3 +62,21 @@ enum BookingStatus {
   CONFIRMED
   CANCELLED
 }
+
+model CompletedDinner {
+  id               String   @id @default(cuid())
+  guestName        String
+  guestEmail       String
+  allergies        String?
+  favoriteCuisines String?
+  dinnerDate       DateTime?
+  dinnerTime       String?
+  menu             String?
+  notes            String?
+  photoDataUrls    String?
+  completedAt      DateTime @default(now())
+  createdAt        DateTime @default(now())
+
+  @@index([completedAt])
+  @@index([guestEmail])
+}

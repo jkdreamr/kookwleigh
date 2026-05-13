@@ -1,6 +1,7 @@
 import type {
   AvailableSlot,
   Booking,
+  CompletedDinner,
   Guest,
   Prisma,
   PrismaClient,
@@ -10,6 +11,7 @@ import type {
   ActiveMealView,
   AdminPendingBookingView,
   BookingView,
+  CompletedDinnerView,
   GuestView,
   SlotView,
 } from "@/lib/types";
@@ -109,5 +111,45 @@ export function serializeActiveMeal(guest: ActiveMealWithBooking): ActiveMealVie
     booking: latestConfirmedBooking
       ? serializeBooking(latestConfirmedBooking)
       : null,
+  };
+}
+
+function parsePhotoDataUrls(value: string | null) {
+  if (!value) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter(
+      (item): item is string =>
+        typeof item === "string" && item.startsWith("data:image/"),
+    );
+  } catch {
+    return [];
+  }
+}
+
+export function serializeCompletedDinner(
+  dinner: CompletedDinner,
+): CompletedDinnerView {
+  return {
+    allergies: dinner.allergies,
+    completedAt: dinner.completedAt.toISOString(),
+    createdAt: dinner.createdAt.toISOString(),
+    dinnerDate: dinner.dinnerDate?.toISOString() ?? null,
+    dinnerTime: dinner.dinnerTime,
+    favoriteCuisines: dinner.favoriteCuisines,
+    guestEmail: dinner.guestEmail,
+    guestName: dinner.guestName,
+    id: dinner.id,
+    menu: dinner.menu,
+    notes: dinner.notes,
+    photoDataUrls: parsePhotoDataUrls(dinner.photoDataUrls),
   };
 }
