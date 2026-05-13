@@ -1,0 +1,99 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: 246 241 232;
+  --foreground: 26 26 26;
+  --card: 255 251 245;
+  --border: 217 205 191;
+  --muted: 114 108 101;
+  --accent: 196 96 74;
+  --sage: 168 184 159;
+  --powder: 220 237 233;
+  --butter: 247 211 122;
+  --radius: 0.5rem;
+}
+
+* {
+  border-color: rgb(var(--border) / 1);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  min-height: 100vh;
+  color: rgb(var(--foreground) / 1);
+  background:
+    linear-gradient(115deg, rgb(var(--powder) / 0.42) 0%, transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 255, 255, 0.18)),
+    rgb(var(--background) / 1);
+  font-family: var(--font-inter), sans-serif;
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.12;
+  background-image:
+    linear-gradient(rgba(26, 26, 26, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26, 26, 26, 0.03) 1px, transparent 1px),
+    radial-gradient(circle, rgba(26, 26, 26, 0.09) 0.5px, transparent 0.5px);
+  background-size: 72px 72px, 72px 72px, 8px 8px;
+  mix-blend-mode: multiply;
+}
+
+::selection {
+  background: rgb(var(--accent) / 0.18);
+}
+
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-fraunces), serif;
+    letter-spacing: 0;
+  }
+
+  a {
+    color: inherit;
+    text-decoration: none;
+  }
+
+  button,
+  input,
+  textarea {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .eyebrow {
+    @apply text-xs uppercase tracking-[0.28em] text-foreground/55;
+  }
+
+  .glass-card {
+    @apply rounded-lg border border-foreground/10 bg-card/80 shadow-editorial backdrop-blur;
+  }
+
+  .section-frame {
+    @apply relative overflow-hidden rounded-lg border border-foreground/10 bg-card/85 p-6 shadow-editorial backdrop-blur md:p-8;
+  }
+
+  .page-grid {
+    @apply mx-auto grid w-full max-w-7xl gap-6 px-4 pb-16 pt-6 sm:px-6 lg:grid-cols-[1.15fr_0.85fr] lg:gap-10 lg:px-10 lg:pb-20 lg:pt-8;
+  }
+
+  .subtitle {
+    @apply max-w-xl text-sm leading-7 text-foreground/70 sm:text-base;
+  }
+}

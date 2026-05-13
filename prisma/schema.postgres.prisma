@@ -1,0 +1,64 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Guest {
+  id               String      @id @default(cuid())
+  name             String
+  email            String      @unique
+  allergies        String?
+  favoriteCuisines String?
+  status           GuestStatus @default(WAITLISTED)
+  position         Int
+  createdAt        DateTime    @default(now())
+  bookings         Booking[]
+
+  @@index([status, position])
+  @@index([createdAt])
+}
+
+enum GuestStatus {
+  WAITLISTED
+  INVITED
+  SCHEDULED
+  COMPLETED
+}
+
+model AvailableSlot {
+  id        String   @id @default(cuid())
+  date      DateTime
+  startTime String
+  endTime   String
+  isBooked  Boolean  @default(false)
+  createdAt DateTime @default(now())
+  booking   Booking?
+
+  @@index([date, isBooked])
+}
+
+model Booking {
+  id            String         @id @default(cuid())
+  guestId       String
+  guest         Guest          @relation(fields: [guestId], references: [id], onDelete: Cascade)
+  slotId        String?        @unique
+  slot          AvailableSlot? @relation(fields: [slotId], references: [id], onDelete: SetNull)
+  requestedDate DateTime?
+  requestedTime String?
+  status        BookingStatus  @default(PENDING)
+  notes         String?
+  createdAt     DateTime       @default(now())
+
+  @@index([guestId, status])
+  @@index([createdAt])
+}
+
+enum BookingStatus {
+  PENDING
+  CONFIRMED
+  CANCELLED
+}
