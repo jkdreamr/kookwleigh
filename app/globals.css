@@ -86,7 +86,7 @@ body::before {
   }
 
   .section-frame {
-    @apply relative overflow-hidden rounded-lg border border-foreground/10 bg-card/85 p-6 shadow-editorial backdrop-blur md:p-8;
+    @apply relative overflow-hidden rounded-xl border border-foreground/10 bg-card/85 p-6 shadow-editorial backdrop-blur md:p-8;
   }
 
   .page-grid {
