@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { CalendarDays, Check, LogOut, Pencil, Send } from "lucide-react";
+import { ArrowRight, CalendarDays, Check, LogOut, Pencil, Send } from "lucide-react";
 import { AnimatedCounter } from "@/components/animated-counter";
 import { FormStatus } from "@/components/form-status";
 import { PageTransition } from "@/components/page-transition";
@@ -151,6 +151,25 @@ export function DashboardClient() {
     });
   }
 
+  function rejoinWaitlist() {
+    setError("");
+    setSuccess("");
+    startTransition(async () => {
+      const response = await fetch("/api/guest/rejoin", {
+        method: "POST",
+      });
+
+      if (!response.ok) {
+        const result = (await response.json()) as { error?: string };
+        setError(result.error ?? "Could not rejoin the waitlist.");
+        return;
+      }
+
+      setSuccess("Rejoined the waitlist!");
+      await loadDashboard();
+    });
+  }
+
   if (!data) {
     return (
       <main className="mx-auto flex min-h-screen max-w-5xl items-center px-5">
@@ -205,7 +224,15 @@ export function DashboardClient() {
             {guest.status === "COMPLETED" && (
               <div className="mt-7 space-y-5">
                 <h2 className="font-serif text-5xl">Dinner complete.</h2>
-                <p className="subtitle">Josh and Leigh will reset this record from admin.</p>
+                <p className="subtitle">Hope you enjoyed it! Join the waitlist again whenever you&apos;d like.</p>
+                <Button
+                  disabled={isPending}
+                  onClick={rejoinWaitlist}
+                  className="w-full sm:w-auto"
+                >
+                  {isPending ? "Joining..." : "Rejoin Waitlist"}
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
               </div>
             )}
           </section>

@@ -30,7 +30,12 @@ export async function POST(request: Request) {
         });
       });
     } else {
-      await db.guest.delete({ where: { id: payload.guestId } });
+      await db.guest.update({
+        data: {
+          status: GuestStatus.COMPLETED,
+        },
+        where: { id: payload.guestId },
+      });
     }
 
     return NextResponse.json({ ok: true });

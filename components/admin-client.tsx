@@ -358,7 +358,7 @@ export function AdminClient() {
                         "/api/admin/complete",
                         { guestId: guest.id },
                         "POST",
-                        "Guest completed and removed.",
+                        "Guest marked as completed.",
                       )
                     }
                     variant="secondary"
