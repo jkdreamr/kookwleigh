@@ -145,17 +145,20 @@ export function AdminClient() {
             Logout
           </Button>
           <div className="grid grid-cols-3 gap-2 text-center text-sm">
-            <div className="rounded-lg bg-white/65 px-4 py-3 shadow-sm">
-              <strong className="block text-xl">{guests.waitlisted.length}</strong>
-              waitlist
+            <div className="rounded-lg bg-white/65 px-2 py-2 shadow-sm sm:px-4 sm:py-3">
+              <strong className="block text-lg sm:text-xl">{guests.waitlisted.length}</strong>
+              <span className="hidden sm:inline">waitlist</span>
+              <span className="sm:hidden">wait</span>
             </div>
-            <div className="rounded-lg bg-white/65 px-4 py-3 shadow-sm">
-              <strong className="block text-xl">{bookings.pending.length}</strong>
-              pending
+            <div className="rounded-lg bg-white/65 px-2 py-2 shadow-sm sm:px-4 sm:py-3">
+              <strong className="block text-lg sm:text-xl">{bookings.pending.length}</strong>
+              <span className="hidden sm:inline">pending</span>
+              <span className="sm:hidden">pend</span>
             </div>
-            <div className="rounded-lg bg-white/65 px-4 py-3 shadow-sm">
-              <strong className="block text-xl">{guests.activeMeals.length}</strong>
-              active
+            <div className="rounded-lg bg-white/65 px-2 py-2 shadow-sm sm:px-4 sm:py-3">
+              <strong className="block text-lg sm:text-xl">{guests.activeMeals.length}</strong>
+              <span className="hidden sm:inline">active</span>
+              <span className="sm:hidden">act</span>
             </div>
           </div>
         </div>
@@ -191,6 +194,7 @@ export function AdminClient() {
                     </p>
                   </div>
                   <Button
+                    className="w-full sm:w-auto"
                     disabled={isPending}
                     onClick={() =>
                       mutate(
@@ -299,8 +303,9 @@ export function AdminClient() {
                       <Textarea className="mt-3" readOnly value={booking.notes} />
                     )}
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <Button
+                      className="w-full sm:w-auto"
                       disabled={isPending}
                       onClick={() =>
                         mutate(
@@ -315,6 +320,7 @@ export function AdminClient() {
                       Approve
                     </Button>
                     <Button
+                      className="w-full sm:w-auto"
                       disabled={isPending}
                       onClick={() =>
                         mutate(
@@ -352,6 +358,7 @@ export function AdminClient() {
                     <p className="mt-2 text-sm font-medium">{bookingText(guest.booking)}</p>
                   </div>
                   <Button
+                    className="w-full sm:w-auto"
                     disabled={isPending}
                     onClick={() =>
                       mutate(

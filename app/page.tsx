@@ -22,11 +22,11 @@ export default function Home() {
         <div className="relative z-10 flex w-full flex-col justify-between px-5 py-6 sm:px-8 lg:px-12">
           <nav className="flex items-center justify-between text-white">
             <BrandMark href="/" />
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 sm:gap-3">
               <Button asChild className="text-white hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
                 <Link href="/login">Login</Link>
               </Button>
-              <Button asChild className="text-white hover:bg-white/10 hover:text-white" size="sm" variant="ghost">
+              <Button asChild className="hidden text-white hover:bg-white/10 hover:text-white sm:inline-flex" size="sm" variant="ghost">
                 <Link href="/admin/login">
                   <Lock className="h-3.5 w-3.5" />
                   Host
@@ -59,7 +59,10 @@ export default function Home() {
                   </Link>
                 </Button>
                 <Button asChild size="lg" variant="outline">
-                  <Link href="/login">I am already in line</Link>
+                  <Link href="/login">
+                    <span className="hidden sm:inline">I am already in line</span>
+                    <span className="sm:hidden">Already in line</span>
+                  </Link>
                 </Button>
               </div>
             </div>
