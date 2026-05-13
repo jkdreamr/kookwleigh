@@ -27,9 +27,7 @@ body {
   min-height: 100vh;
   color: rgb(var(--foreground) / 1);
   background:
-    radial-gradient(ellipse 70% 45% at 8% 0%, rgb(var(--sage) / 0.11) 0%, transparent 58%),
-    linear-gradient(115deg, rgb(var(--powder) / 0.44) 0%, transparent 36%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.80), rgba(255, 255, 255, 0.16)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.08)),
     rgb(var(--background) / 1);
   font-family: var(--font-inter), sans-serif;
 }
@@ -87,7 +85,7 @@ body::before {
   }
 
   .section-frame {
-    @apply relative overflow-hidden rounded-xl border border-foreground/10 bg-card/85 p-6 shadow-editorial backdrop-blur md:p-8;
+    @apply relative overflow-hidden rounded-xl border border-foreground/10 bg-card/85 p-6 backdrop-blur md:p-8;
   }
 
   .page-grid {

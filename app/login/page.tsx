@@ -15,12 +15,6 @@ export default function LoginPage() {
       {/* ── Left editorial column ── */}
       <section className="relative flex flex-col justify-between gap-10 overflow-hidden">
 
-        {/* Decorative powder blob — purely visual */}
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -left-20 -top-20 h-[420px] w-[420px] rounded-full bg-powder/55 blur-3xl"
-        />
-
         <BrandMark href="/" />
 
         <PageTransition>

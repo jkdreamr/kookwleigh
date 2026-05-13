@@ -54,21 +54,11 @@ function statusLabel(status: string): string {
 
 function statusAccent(status: string): string {
   switch (status) {
-    case "WAITLISTED": return "bg-gradient-to-r from-sage/55 to-sage/15";
-    case "INVITED":    return "bg-gradient-to-r from-accent/65 to-accent/15";
-    case "SCHEDULED":  return "bg-gradient-to-r from-sage to-sage/30";
-    case "COMPLETED":  return "bg-gradient-to-r from-butter/75 to-butter/20";
-    default:           return "bg-foreground/8";
-  }
-}
-
-function statusDot(status: string): string {
-  switch (status) {
-    case "WAITLISTED": return "bg-sage";
-    case "INVITED":    return "bg-accent";
-    case "SCHEDULED":  return "bg-emerald-400";
-    case "COMPLETED":  return "bg-butter";
-    default:           return "bg-foreground/30";
+    case "WAITLISTED": return "bg-foreground/6";
+    case "INVITED":    return "bg-gradient-to-r from-accent/50 to-accent/10";
+    case "SCHEDULED":  return "bg-foreground/8";
+    case "COMPLETED":  return "bg-gradient-to-r from-butter/60 to-butter/15";
+    default:           return "bg-foreground/6";
   }
 }
 
@@ -248,9 +238,8 @@ export function DashboardClient() {
 
           <div className="px-7 py-7">
 
-          {/* Status dot + label */}
-          <div className="mb-5 flex items-center gap-2">
-            <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", statusDot(guest.status))} />
+          {/* Status label */}
+          <div className="mb-5">
             <span className="section-label">{statusLabel(guest.status)}</span>
           </div>
 
