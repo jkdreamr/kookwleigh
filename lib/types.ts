@@ -50,6 +50,7 @@ export type AdminPendingBookingView = BookingView & {
 };
 
 export type AdminBookingsResponse = {
+  confirmed: AdminPendingBookingView[];
   pending: AdminPendingBookingView[];
 };
 

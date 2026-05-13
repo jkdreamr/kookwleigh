@@ -8,6 +8,7 @@ import {
   formatTimeRange,
 } from "@/lib/dates";
 import {
+  sendBookingCancelledEmail,
   sendBookingConfirmedEmail,
   sendBookingDeclinedEmail,
 } from "@/lib/email";
@@ -25,13 +26,23 @@ export async function GET() {
     return unauthorized();
   }
 
-  const pending = await db.booking.findMany({
-    include: { guest: true, slot: true },
-    orderBy: { createdAt: "asc" },
-    where: { status: BookingStatus.PENDING },
-  });
+  const [pending, confirmed] = await Promise.all([
+    db.booking.findMany({
+      include: { guest: true, slot: true },
+      orderBy: { createdAt: "asc" },
+      where: { status: BookingStatus.PENDING },
+    }),
+    db.booking.findMany({
+      include: { guest: true, slot: true },
+      orderBy: { createdAt: "asc" },
+      where: { status: BookingStatus.CONFIRMED },
+    }),
+  ]);
 
-  return NextResponse.json({ pending: pending.map(serializePendingBooking) });
+  return NextResponse.json({
+    confirmed: confirmed.map(serializePendingBooking),
+    pending: pending.map(serializePendingBooking),
+  });
 }
 
 export async function PATCH(request: Request) {
@@ -62,6 +73,49 @@ export async function PATCH(request: Request) {
       await sendBookingDeclinedEmail(declined.guest.email);
 
       return NextResponse.json({ booking: serializePendingBooking(declined) });
+    }
+
+    if (payload.action === "cancel") {
+      const cancelled = await db.$transaction(async (tx) => {
+        if (booking.slotId) {
+          await tx.availableSlot.update({
+            data: { isBooked: false },
+            where: { id: booking.slotId },
+          });
+        }
+
+        const updated = await tx.booking.update({
+          data: { status: BookingStatus.CANCELLED },
+          include: { guest: true, slot: true },
+          where: { id: booking.id },
+        });
+
+        await tx.guest.update({
+          data: { status: GuestStatus.COMPLETED },
+          where: { id: booking.guestId },
+        });
+
+        return updated;
+      });
+
+      const dateLabel = cancelled.slot
+        ? formatDisplayDate(cancelled.slot.date)
+        : cancelled.requestedDate
+          ? formatDisplayDate(cancelled.requestedDate)
+          : "the selected date";
+      const timeLabel = cancelled.slot
+        ? formatTimeRange(cancelled.slot.startTime, cancelled.slot.endTime)
+        : cancelled.requestedTime
+          ? formatTimeLabel(cancelled.requestedTime)
+          : "the selected time";
+
+      await sendBookingCancelledEmail({
+        dateLabel,
+        email: cancelled.guest.email,
+        timeLabel,
+      });
+
+      return NextResponse.json({ booking: serializePendingBooking(cancelled) });
     }
 
     const confirmed = await db.$transaction(async (tx) => {

@@ -51,7 +51,10 @@ export function AdminClient() {
     activeMeals: [],
     waitlisted: [],
   });
-  const [bookings, setBookings] = useState<AdminBookingsResponse>({ pending: [] });
+  const [bookings, setBookings] = useState<AdminBookingsResponse>({
+  confirmed: [],
+  pending: [],
+});
   const [slots, setSlots] = useState<AdminSlotsResponse>({ slots: [] });
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
@@ -289,7 +292,48 @@ export function AdminClient() {
 
         <TabsContent value="bookings">
           <div className="grid gap-4">
-            {bookings.pending.map((booking) => (
+            {bookings.confirmed.length > 0 && (
+              <>
+                <h3 className="font-serif text-2xl">Confirmed Bookings</h3>
+                {bookings.confirmed.map((booking) => (
+                  <Card key={booking.id}>
+                    <CardContent className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="font-serif text-2xl">{booking.guest.name}</h2>
+                          <Badge>{booking.status}</Badge>
+                        </div>
+                        <p className="mt-1 text-sm text-foreground/60">{booking.guest.email}</p>
+                        <p className="mt-3 text-sm font-medium">{bookingText(booking)}</p>
+                        {booking.notes && (
+                          <Textarea className="mt-3" readOnly value={booking.notes} />
+                        )}
+                      </div>
+                      <Button
+                        className="w-full sm:w-auto"
+                        disabled={isPending}
+                        onClick={() =>
+                          mutate(
+                            "/api/admin/bookings",
+                            { action: "cancel", bookingId: booking.id },
+                            "PATCH",
+                            "Booking cancelled.",
+                          )
+                        }
+                        variant="outline"
+                      >
+                        <X className="h-4 w-4" />
+                        Cancel
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </>
+            )}
+            {bookings.pending.length > 0 && (
+              <>
+                <h3 className="font-serif text-2xl mt-6">Pending Requests</h3>
+                {bookings.pending.map((booking) => (
               <Card key={booking.id}>
                 <CardContent className="grid gap-4 p-5 lg:grid-cols-[1fr_auto] lg:items-center">
                   <div>
@@ -339,9 +383,11 @@ export function AdminClient() {
                 </CardContent>
               </Card>
             ))}
-            {!bookings.pending.length && (
+              </>
+            )}
+            {!bookings.confirmed.length && !bookings.pending.length && (
               <p className="rounded-lg bg-white/55 p-6 text-sm text-foreground/60">
-                No pending booking requests.
+                No bookings yet.
               </p>
             )}
           </div>

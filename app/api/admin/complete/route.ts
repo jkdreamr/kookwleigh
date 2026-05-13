@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { GuestStatus } from "@prisma/client";
 import { apiError, unauthorized } from "@/app/api/_helpers";
 import { db } from "@/lib/db";
+import { sendWaitlistRemovedEmail } from "@/lib/email";
 import { parseJsonBody } from "@/lib/utils";
 import { requireAdminSession } from "@/lib/session";
 import { completeGuestSchema } from "@/lib/validators";
@@ -30,12 +31,22 @@ export async function POST(request: Request) {
         });
       });
     } else {
+      const guest = await db.guest.findUnique({
+        where: { id: payload.guestId },
+      });
+
+      if (!guest) {
+        return NextResponse.json({ error: "Guest not found." }, { status: 404 });
+      }
+
       await db.guest.update({
         data: {
           status: GuestStatus.COMPLETED,
         },
         where: { id: payload.guestId },
       });
+
+      await sendWaitlistRemovedEmail(guest.email);
     }
 
     return NextResponse.json({ ok: true });

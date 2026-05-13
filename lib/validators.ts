@@ -77,7 +77,7 @@ export const deleteSlotSchema = z.object({
 });
 
 export const adminBookingSchema = z.object({
-  action: z.enum(["approve", "decline"]),
+  action: z.enum(["approve", "decline", "cancel"]),
   bookingId: z.string().trim().min(1),
 });
 

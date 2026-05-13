@@ -148,3 +148,43 @@ export async function sendBookingDeclinedEmail(email: string) {
     to: email,
   });
 }
+
+export async function sendBookingCancelledEmail({
+  dateLabel,
+  email,
+  timeLabel,
+}: {
+  dateLabel: string;
+  email: string;
+  timeLabel: string;
+}) {
+  await sendEmail({
+    ctaHref: `${env.appUrl}/dashboard`,
+    ctaLabel: "Rejoin waitlist",
+    details: [
+      `Your scheduled dinner on ${dateLabel} at ${timeLabel} has been cancelled.`,
+      "We apologize for the inconvenience. You can rejoin the waitlist from your dashboard.",
+    ],
+    headline: "Your dinner has been cancelled.",
+    preview: `Your dinner on ${dateLabel} at ${timeLabel} has been cancelled.`,
+    subject: "Your kookwleigh dinner has been cancelled",
+    text: `Your scheduled dinner has been cancelled. We apologize for the inconvenience.`,
+    to: email,
+  });
+}
+
+export async function sendWaitlistRemovedEmail(email: string) {
+  await sendEmail({
+    ctaHref: `${env.appUrl}/login`,
+    ctaLabel: "Rejoin waitlist",
+    details: [
+      "You have been removed from the waitlist.",
+      "You can rejoin the waitlist at any time from your dashboard.",
+    ],
+    headline: "Removed from waitlist.",
+    preview: "You have been removed from the waitlist.",
+    subject: "Removed from kookwleigh waitlist",
+    text: "You have been removed from the waitlist. You can rejoin at any time.",
+    to: email,
+  });
+}
