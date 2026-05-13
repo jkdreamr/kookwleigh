@@ -25,6 +25,8 @@ const config: Config = {
       },
       boxShadow: {
         editorial: "0 24px 70px -42px rgba(26, 26, 26, 0.42)",
+        soft: "0 2px 16px rgba(26, 26, 26, 0.06), 0 1px 4px rgba(26, 26, 26, 0.04)",
+        card: "0 1px 3px rgba(26, 26, 26, 0.05), 0 10px 36px -16px rgba(26, 26, 26, 0.16)",
       },
       borderRadius: {
         "4xl": "2rem",

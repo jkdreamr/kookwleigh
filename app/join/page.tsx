@@ -11,12 +11,24 @@ export const metadata: Metadata = {
 export default function JoinPage() {
   return (
     <main className="page-grid min-h-screen">
-      <section className="flex flex-col justify-between gap-10">
+
+      {/* ── Left editorial column ── */}
+      <section className="relative flex flex-col justify-between gap-10 overflow-hidden">
+
+        {/* Decorative sage blob — purely visual */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -left-20 -top-20 h-[420px] w-[420px] rounded-full bg-sage/10 blur-3xl"
+        />
+
         <BrandMark href="/" />
+
         <PageTransition>
           <div>
+            {/* Thin terracotta accent rule */}
+            <div className="mb-5 h-px w-10 bg-accent/45" />
             <p className="eyebrow">Get on the list</p>
-            <h1 className="mt-4 font-serif text-5xl leading-none sm:text-6xl lg:text-7xl">
+            <h1 className="mt-4 font-serif text-5xl leading-[0.94] tracking-tight sm:text-6xl lg:text-7xl">
               Save your<br />seat at the table.
             </h1>
             <p className="subtitle mt-6">
@@ -25,20 +37,25 @@ export default function JoinPage() {
             </p>
           </div>
         </PageTransition>
-        <div className="flex flex-col gap-2 text-sm text-foreground/50">
-          <Link className="hover:text-foreground transition-colors" href="/login">
-            Already on the list? Log in with your email.
+
+        <nav className="flex flex-col gap-2 text-sm text-foreground/45">
+          <Link className="transition-colors hover:text-foreground" href="/login">
+            Already on the list? Log in →
           </Link>
-          <Link className="hover:text-foreground transition-colors" href="/">
+          <Link className="transition-colors hover:text-foreground" href="/">
             ← Back to home
           </Link>
-        </div>
+        </nav>
       </section>
+
+      {/* ── Right form column ── */}
       <PageTransition delay={0.08}>
         <section className="section-frame self-start">
+          <p className="section-label mb-5">Your details</p>
           <JoinForm />
         </section>
       </PageTransition>
+
     </main>
   );
 }

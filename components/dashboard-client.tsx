@@ -4,10 +4,8 @@ import { useEffect, useMemo, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import {
   ArrowRight,
-  CalendarDays,
   Check,
   LogOut,
-  Pencil,
   Send,
   X,
 } from "lucide-react";
@@ -42,6 +40,36 @@ function bookingLabel(data: DashboardResponse): string | null {
       booking.requestedTime,
     )}`;
   return "Request submitted — awaiting confirmation";
+}
+
+function statusLabel(status: string): string {
+  switch (status) {
+    case "WAITLISTED": return "On the waitlist";
+    case "INVITED": return "You're invited";
+    case "SCHEDULED": return "Dinner confirmed";
+    case "COMPLETED": return "Dinner complete";
+    default: return status.toLowerCase().replace(/_/g, " ");
+  }
+}
+
+function statusAccent(status: string): string {
+  switch (status) {
+    case "WAITLISTED": return "bg-gradient-to-r from-sage/55 to-sage/15";
+    case "INVITED":    return "bg-gradient-to-r from-accent/65 to-accent/15";
+    case "SCHEDULED":  return "bg-gradient-to-r from-sage to-sage/30";
+    case "COMPLETED":  return "bg-gradient-to-r from-butter/75 to-butter/20";
+    default:           return "bg-foreground/8";
+  }
+}
+
+function statusDot(status: string): string {
+  switch (status) {
+    case "WAITLISTED": return "bg-sage";
+    case "INVITED":    return "bg-accent";
+    case "SCHEDULED":  return "bg-emerald-400";
+    case "COMPLETED":  return "bg-butter";
+    default:           return "bg-foreground/30";
+  }
 }
 
 // ─── component ─────────────────────────────────────────────────────────────
@@ -161,15 +189,25 @@ export function DashboardClient() {
   if (loadError) {
     return (
       <main className="flex min-h-screen items-center justify-center px-5">
-        <p className="text-sm text-red-700">{loadError}</p>
+        <div className="w-full max-w-sm space-y-4 rounded-2xl border border-red-100 bg-red-50/80 px-8 py-8 text-center shadow-soft backdrop-blur">
+          <p className="font-serif text-xl text-foreground/80">Something went wrong.</p>
+          <p className="text-sm text-red-800">{loadError}</p>
+          <a
+            className="block text-sm text-foreground/45 transition-colors hover:text-foreground"
+            href="/login"
+          >
+            Return to login →
+          </a>
+        </div>
       </main>
     );
   }
 
   if (!data) {
     return (
-      <main className="flex min-h-screen items-center justify-center px-5">
-        <p className="eyebrow animate-pulse">Loading your table</p>
+      <main className="flex min-h-screen flex-col items-center justify-center gap-5 px-5">
+        <span className="font-serif text-3xl tracking-tight text-foreground/70">kookwleigh</span>
+        <p className="eyebrow animate-pulse text-foreground/35">Loading…</p>
       </main>
     );
   }
@@ -184,7 +222,7 @@ export function DashboardClient() {
     <main className="mx-auto w-full max-w-2xl px-5 py-10 sm:px-8 lg:py-16">
 
       {/* ── Page header ── */}
-      <div className="mb-10 flex items-start justify-between">
+      <div className="mb-10 border-b border-foreground/8 pb-8 flex items-start justify-between">
         <div>
           <p className="eyebrow mb-2">kookwleigh</p>
           <h1 className="font-serif text-[2.8rem] leading-none tracking-tight sm:text-5xl">
@@ -203,31 +241,36 @@ export function DashboardClient() {
 
       {/* ── Status card ── */}
       <PageTransition>
-        <div className="mb-6 rounded-2xl border border-foreground/8 bg-white/60 px-7 py-6 backdrop-blur">
+        <div className="mb-6 overflow-hidden rounded-2xl border border-foreground/8 bg-white/60 shadow-card backdrop-blur">
 
-          {/* Status label pill */}
-          <span className="inline-flex items-center rounded-full bg-foreground/6 px-3 py-1 text-[11px] font-medium uppercase tracking-[0.18em] text-foreground/50">
-            {guest.status.toLowerCase()}
-          </span>
+          {/* Colored top accent strip — status-dependent */}
+          <div className={cn("h-[3px] w-full", statusAccent(guest.status))} />
+
+          <div className="px-7 py-7">
+
+          {/* Status dot + label */}
+          <div className="mb-5 flex items-center gap-2">
+            <span className={cn("h-1.5 w-1.5 rounded-full shrink-0", statusDot(guest.status))} />
+            <span className="section-label">{statusLabel(guest.status)}</span>
+          </div>
 
           {/* WAITLISTED */}
           {guest.status === "WAITLISTED" && (
-            <div className="mt-4">
-              <p className="mb-1 text-xs uppercase tracking-widest text-foreground/35">
-                Your position
-              </p>
+            <div className="mt-2">
+              <p className="section-label mb-2">Your position</p>
               <AnimatedCounter value={guest.position} />
-              <p className="mt-3 text-sm leading-relaxed text-foreground/55">
-                Josh and Leigh will reach out personally when it is your turn.
+              <p className="mt-5 text-sm leading-relaxed text-foreground/50">
+                You will be notified when it is your turn.
               </p>
             </div>
           )}
 
           {/* INVITED */}
           {guest.status === "INVITED" && (
-            <div className="mt-4">
-              <h2 className="font-serif text-3xl sm:text-4xl">It is your turn.</h2>
-              <p className="mt-2 text-sm leading-relaxed text-foreground/55">
+            <div className="mt-2">
+              <div className="mb-4 h-px w-8 bg-accent/35" />
+              <h2 className="font-serif text-4xl leading-[0.95] sm:text-5xl">It is your turn.</h2>
+              <p className="mt-4 text-sm leading-relaxed text-foreground/50">
                 Pick a date below or suggest your own night.
               </p>
             </div>
@@ -235,16 +278,18 @@ export function DashboardClient() {
 
           {/* SCHEDULED */}
           {guest.status === "SCHEDULED" && (
-            <div className="mt-4">
-              <h2 className="font-serif text-3xl sm:text-4xl">See you soon.</h2>
+            <div className="mt-2">
+              <h2 className="font-serif text-4xl leading-[0.95] sm:text-5xl">See you soon.</h2>
               {label && (
-                <p className="mt-2 text-sm font-medium text-foreground/65">{label}</p>
+                <p className="mt-4 inline-flex items-center gap-2 rounded-lg bg-foreground/5 px-4 py-2.5 text-sm font-medium text-foreground/70">
+                  {label}
+                </p>
               )}
-              <p className="mt-2 text-sm text-foreground/45">
+              <p className="mt-4 text-sm leading-relaxed text-foreground/45">
                 Something come up? You can cancel below and we will free the slot.
               </p>
               <button
-                className="mt-4 rounded-full border border-foreground/12 bg-white/50 px-4 py-2 text-sm text-foreground/55 transition hover:border-red-200/80 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                className="mt-5 rounded-full border border-foreground/12 bg-white/50 px-4 py-2 text-sm text-foreground/55 transition hover:border-red-200/80 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
                 disabled={isPending}
                 onClick={cancelBooking}
               >
@@ -255,9 +300,10 @@ export function DashboardClient() {
 
           {/* COMPLETED — dinner truly done, host marked it complete */}
           {guest.status === "COMPLETED" && (
-            <div className="mt-4">
-              <h2 className="font-serif text-3xl sm:text-4xl">Thank you for coming.</h2>
-              <p className="mt-2 text-sm leading-relaxed text-foreground/55">
+            <div className="mt-2">
+              <div className="mb-4 h-px w-8 bg-butter/60" />
+              <h2 className="font-serif text-4xl leading-[0.95] sm:text-5xl">Thank you for coming.</h2>
+              <p className="mt-4 text-sm leading-relaxed text-foreground/50">
                 It was a pleasure having you at our table. We hope to see you again soon.
               </p>
               <Button
@@ -271,15 +317,17 @@ export function DashboardClient() {
               </Button>
             </div>
           )}
-        </div>
+
+          </div>{/* end inner px-7 py-7 */}
+        </div>{/* end status card */}
       </PageTransition>
 
       {/* ── Booking form (INVITED only) ── */}
       {guest.status === "INVITED" && (
         <PageTransition delay={0.06}>
-          <div className="mb-6 rounded-2xl border border-foreground/8 bg-white/60 px-7 py-6 backdrop-blur">
-            <div className="mb-5 flex items-center gap-2">
-              <CalendarDays className="h-4 w-4 text-foreground/35" />
+          <div className="mb-6 rounded-2xl border border-foreground/8 bg-white/60 px-7 py-7 shadow-card backdrop-blur">
+            <div className="mb-6">
+              <p className="section-label mb-2">Schedule</p>
               <h2 className="font-serif text-2xl">Choose a date</h2>
             </div>
 
@@ -287,10 +335,8 @@ export function DashboardClient() {
               {/* Available slots */}
               {data.availableSlots.length > 0 && (
                 <div>
-                  <p className="mb-1 text-xs uppercase tracking-widest text-foreground/40">
-                    Open slots
-                  </p>
-                  <p className="mb-3 text-xs text-foreground/40">
+                  <p className="section-label mb-3">Open slots</p>
+                  <p className="mb-4 text-xs leading-relaxed text-foreground/40">
                     Select one, or scroll down to suggest your own date.
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
@@ -299,10 +345,10 @@ export function DashboardClient() {
                       return (
                         <button
                           className={cn(
-                            "relative rounded-xl border px-4 py-3.5 text-left text-sm transition-all",
+                            "relative rounded-xl border px-5 py-4 text-left text-sm transition-all duration-200",
                             sel
-                              ? "border-accent/50 bg-accent/5 shadow-sm"
-                              : "border-foreground/8 bg-white/40 hover:bg-white/80",
+                              ? "border-accent/40 bg-accent/6 shadow-soft ring-1 ring-accent/20"
+                              : "border-foreground/8 bg-white/50 hover:border-foreground/15 hover:bg-white/90 hover:shadow-soft",
                           )}
                           key={slot.id}
                           onClick={() => toggleSlot(slot.id)}
@@ -345,7 +391,7 @@ export function DashboardClient() {
               {/* Custom date / time */}
               {!selectedSlotId && (
                 <div>
-                  <p className="mb-3 text-xs uppercase tracking-widest text-foreground/40">
+                  <p className="section-label mb-4">
                     {data.availableSlots.length > 0 ? "Or suggest a different night" : "Suggest a night that works for you"}
                   </p>
                   <div className="grid gap-3 sm:grid-cols-2">
@@ -379,10 +425,8 @@ export function DashboardClient() {
 
           {/* Current pending request summary */}
           {data.booking && (
-            <div className="mb-6 rounded-2xl border border-foreground/8 bg-white/40 px-7 py-5 backdrop-blur">
-              <p className="text-xs uppercase tracking-widest text-foreground/35 mb-2">
-                Current request
-              </p>
+            <div className="mb-6 rounded-2xl border border-foreground/8 bg-white/40 px-7 py-6 backdrop-blur">
+              <p className="section-label mb-3">Current request</p>
               <p className="text-sm font-medium text-foreground/70">
                 {label ?? "Submitted — awaiting confirmation"}
               </p>
@@ -398,9 +442,9 @@ export function DashboardClient() {
 
       {/* ── Edit details ── */}
       <PageTransition delay={0.1}>
-        <div className="rounded-2xl border border-foreground/8 bg-white/60 px-7 py-6 backdrop-blur">
-          <div className="mb-5 flex items-center gap-2">
-            <Pencil className="h-4 w-4 text-foreground/35" />
+        <div className="rounded-2xl border border-foreground/8 bg-white/60 px-7 py-7 shadow-card backdrop-blur">
+          <div className="mb-6">
+            <p className="section-label mb-2">Account</p>
             <h2 className="font-serif text-2xl">Your details</h2>
           </div>
 
@@ -411,7 +455,10 @@ export function DashboardClient() {
             </div>
 
             <div className="grid gap-1.5">
-              <Label>Email</Label>
+              <Label className="flex items-center justify-between">
+                Email
+                <span className="text-[11px] font-normal text-foreground/35">Cannot be changed</span>
+              </Label>
               <Input disabled value={guest.email} />
             </div>
 

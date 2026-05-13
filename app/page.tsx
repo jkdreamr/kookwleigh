@@ -67,8 +67,7 @@ export default function Home() {
                 kookwleigh
               </h1>
               <p className="mt-7 max-w-lg text-base leading-7 text-white/75 sm:text-lg">
-                A small dinner table for people we love. Josh and Leigh cook — you show up hungry.
-                Get on the list and we will reach out when a seat opens.
+                A small dinner table for people we love! Get on the list and we will reach out when a seat opens. Come hungry!
               </p>
               <div className="mt-9 flex flex-wrap gap-3">
                 <Button asChild size="lg">
